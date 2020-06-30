@@ -1,9 +1,3 @@
-import asyncio
-import concurrent.futures
-
-import aiohttp
-from lxml.etree import tostring
-from lxml.html import fromstring
 from peewee import *
 
 db = SqliteDatabase("cf.sqlite")

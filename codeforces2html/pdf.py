@@ -1,9 +1,9 @@
 import os
 import webbrowser
 
+import pdfkit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-import pdfkit
 from models import Solutions, SolutionsArray, Tasks
 
 # pewee -> jinja2 -> (pdfkit, wkhtmltopdf)
