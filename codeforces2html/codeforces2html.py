@@ -8,10 +8,8 @@ import aio
 from models import Solutions, SolutionsArray, Tasks, clean, db
 from utils import get_condition, get_contest_title, problemset
 
-CONTEST_RANGE = 50
+CONTEST_RANGE = 1
 REQUESTS = asyncio.run(aio.build(CONTEST_RANGE))
-
-clean()
 
 TASKS, last_contest = problemset()
 
@@ -77,7 +75,6 @@ for contest in range(last_contest, last_contest - CONTEST_RANGE, -1):
     if contest in TASKS:
         CONTESTS.append(contest)
 
-
 PROGRESS_BAR = tqdm(
     CONTESTS,
     bar_format="\033[1;31;48m{percentage:.3f}%| {desc} |{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
@@ -95,6 +92,15 @@ for contest in PROGRESS_BAR:
         for solution in solution_array:
             ALL_SOLUTIONS.append(solution)
     time.sleep(0.1)
+
+# delete old
+
+Tasks.delete().where(Tasks.id << [task["id"] for task in ALL_TASKS]).execute()
+Solutions.delete().where(
+    Solutions.solution_id
+    << [solution["solution_id"] for solution in ALL_SOLUTIONS]
+).execute()
+
 
 with db.atomic():
     for batch in chunked(ALL_SOLUTIONS, 100):
