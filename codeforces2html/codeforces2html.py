@@ -8,7 +8,7 @@ import aio
 from models import Solutions, SolutionsArray, Tasks, clean, db
 from utils import get_condition, get_contest_title, problemset
 
-CONTEST_RANGE = 1
+CONTEST_RANGE = 10
 REQUESTS = asyncio.run(aio.build(CONTEST_RANGE))
 
 TASKS, last_contest = problemset()
@@ -77,7 +77,8 @@ for contest in range(last_contest, last_contest - CONTEST_RANGE, -1):
 
 PROGRESS_BAR = tqdm(
     CONTESTS,
-    bar_format="\033[1;31;48m{percentage:.3f}%| {desc} |{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+    ascii=" ━",
+    bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
 )
 
 ALL_TASKS = []

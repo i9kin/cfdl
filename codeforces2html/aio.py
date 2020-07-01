@@ -82,8 +82,10 @@ async def build(contest_range):
 
     ECTRACT_BLOG_URL_BAR = tqdm(
         range(len(contests)),
-        bar_format="\033[1;31;48m{percentage:.3f}%| {desc} |{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+        ascii=" ━",
+        bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
     )
+
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for future in asyncio.as_completed(
             [get_html_contest(url) for url in contests]
@@ -103,7 +105,8 @@ async def build(contest_range):
 
     PARSE_BLOGS_BAR = tqdm(
         range(len(blogs_url)),
-        bar_format="\033[1;31;48m{percentage:.3f}%| {desc} |{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+        ascii=" ━",
+        bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
     )
     a = AIO(last_contest)
     with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -128,8 +131,10 @@ async def build(contest_range):
 
     PARSE_TASKS_BAR = tqdm(
         range(len(problems)),
-        bar_format="\033[1;31;48m{percentage:.3f}%| {desc} |{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+        ascii=" ━",
+        bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
     )
+
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for future in asyncio.as_completed(
             [
