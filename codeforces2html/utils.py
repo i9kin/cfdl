@@ -4,7 +4,7 @@ import os
 from lxml import html
 from lxml.etree import tostring
 
-from models import Solutions, SolutionsArray
+from .models import Solutions, SolutionsArray
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 

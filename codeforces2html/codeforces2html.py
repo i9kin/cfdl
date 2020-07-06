@@ -4,14 +4,9 @@ import time
 from peewee import chunked
 from tqdm import tqdm
 
-import aio
-from models import Solutions, SolutionsArray, Tasks, clean, db
-from utils import get_condition, get_contest_title, problemset
-
-CONTEST_RANGE = 10
-REQUESTS = asyncio.run(aio.build(CONTEST_RANGE))
-
-TASKS, last_contest = problemset()
+from .aio import parse
+from .models import Solutions, SolutionsArray, Tasks, clean, db
+from .utils import get_condition, get_contest_title, problemset
 
 
 def parse_task(contest, problem, name, tags, contest_title):
@@ -50,6 +45,16 @@ def parse_contest(contest):
     return task_array, solutions.array
 
 
+clean()
+contests = {1363, 1367}
+tasks = {"1367A"}
+
+
+CONTEST_RANGE = 2
+REQUESTS = parse(contests, 0)
+
+TASKS, last_contest = problemset()
+
 OLD_ISSUES = [
     1252,  # (решение pdf (ICPC))
     1218,  # Bubble Cup 12 (решение pdf)
@@ -71,7 +76,7 @@ ISSUES = [
 # div1 + div2 https://codeforces.com/blog/entry/78355?locale=ru
 
 CONTESTS = []
-for contest in range(last_contest, last_contest - CONTEST_RANGE, -1):
+for contest in contests:
     if contest in TASKS:
         CONTESTS.append(contest)
 
