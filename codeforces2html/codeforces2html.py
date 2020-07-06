@@ -4,9 +4,11 @@ import time
 from peewee import chunked
 from tqdm import tqdm
 
-from .aio import parse
-from .models import Solutions, SolutionsArray, Tasks, clean, db
+from .aio import AIO, parse
+from .models import Solutions, SolutionsArray, Tasks, clean, db, refresh
 from .utils import get_condition, get_contest_title, problemset
+
+REQUESTS = None
 
 
 def parse_task(contest, problem, name, tags, contest_title):
@@ -25,13 +27,13 @@ def parse_task(contest, problem, name, tags, contest_title):
     return obj
 
 
-def parse_contest(contest):
+def parse_contest(contest, contest_array):
     task_array = []
     solutions = REQUESTS.get_blog(contest)
     if solutions == []:
         solutions = SolutionsArray([])
     contest_title = None
-    for i, (problem, name, tags) in enumerate(TASKS[contest]):
+    for i, (problem, name, tags) in enumerate(contest_array):
         task = parse_task(contest, problem, name, tags, contest_title)
         if i == 0:
             contest_title = task["contest_title"]
@@ -45,74 +47,86 @@ def parse_contest(contest):
     return task_array, solutions.array
 
 
-clean()
-contests = {1363, 1367}
-tasks = {"1367A"}
+def main(contests, tasks, tqdm_debug=True):
+    global REQUESTS
+    tasks = list(tasks)
 
+    OLD_ISSUES = [
+        1252,  # (решение pdf (ICPC))
+        1218,  # Bubble Cup 12 (решение pdf)
+        1219,  # Bubble Cup 12 (решение pdf)
+    ]
 
-CONTEST_RANGE = 2
-REQUESTS = parse(contests, 0)
+    ISSUES = [
+        1267,  # (задачи + решение pdf (ICPC))
+        1208,  # (problemTutorial не везде)
+        1191,  # (problemTutorial нет)
+        1190,  # (problemTutorial нет)
+        1184,  # (решение pdf)
+        1172,  # (problemTutorial нет)
+        1173,  # (problemTutorial нет)
+        1153,  # (problemTutorial нет)
+        1129,
+    ]
 
-TASKS, last_contest = problemset()
+    TASKS, last_contest = problemset()
 
-OLD_ISSUES = [
-    1252,  # (решение pdf (ICPC))
-    1218,  # Bubble Cup 12 (решение pdf)
-    1219,  # Bubble Cup 12 (решение pdf)
-]
+    clean_contests = []
+    for contest in contests:
+        if contest in TASKS and contest not in ISSUES:
+            clean_contests.append(contest)
+    clean_tasks = []
 
-ISSUES = [
-    1267,  # (задачи + решение pdf (ICPC))
-    1208,  # (problemTutorial не везде)
-    1191,  # (problemTutorial нет)
-    1190,  # (problemTutorial нет)
-    1184,  # (решение pdf)
-    1172,  # (problemTutorial нет)
-    1173,  # (problemTutorial нет)
-    1153,  # (problemTutorial нет)
-    1129,
-]
+    for task in tasks:
+        for i, char in enumerate(task):
+            if not char.isdigit() and int(task[:i]) not in ISSUES:
+                clean_tasks.append([int(task[:i]), task[i:]])
+                break
 
-# div1 + div2 https://codeforces.com/blog/entry/78355?locale=ru
+    REQUESTS = parse(clean_contests, clean_tasks, tqdm_debug)
+    if tqdm_debug:
+        PROGRESS_BAR = tqdm(
+            clean_contests,
+            ascii=" ━",
+            bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+        )
+    else:
+        PROGRESS_BAR = clean_contests
 
-CONTESTS = []
-for contest in contests:
-    if contest in TASKS:
-        CONTESTS.append(contest)
+    ALL_TASKS = []
+    ALL_SOLUTIONS = []
 
-PROGRESS_BAR = tqdm(
-    CONTESTS,
-    ascii=" ━",
-    bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
-)
-
-ALL_TASKS = []
-ALL_SOLUTIONS = []
-
-for contest in PROGRESS_BAR:
-    PROGRESS_BAR.set_description("contest %s" % contest)
-    if contest not in ISSUES:
-        task_array, solution_array = parse_contest(contest)
+    for contest in PROGRESS_BAR:
+        if tqdm_debug:
+            PROGRESS_BAR.set_description("download contest %s" % contest)
+        task_array, solution_array = parse_contest(contest, TASKS[contest])
         for task in task_array:
             ALL_TASKS.append(task)
         for solution in solution_array:
             ALL_SOLUTIONS.append(solution)
-    time.sleep(0.1)
+    if tqdm_debug:
+        PROGRESS_BAR = tqdm(
+            clean_tasks,
+            ascii=" ━",
+            bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+        )
+    else:
+        PROGRESS_BAR = clean_tasks
 
-# delete old
+    for task in PROGRESS_BAR:
+        if tqdm_debug:
+            PROGRESS_BAR.set_description(f"download task {task[0]}{task[1]}")
+        contest, task_leter = task
 
-Tasks.delete().where(Tasks.id << [task["id"] for task in ALL_TASKS]).execute()
-Solutions.delete().where(
-    Solutions.solution_id
-    << [solution["solution_id"] for solution in ALL_SOLUTIONS]
-).execute()
+        problem, name, tags = None, None, None
+        for t in TASKS[contest]:
+            if t[0] == task_leter:
+                problem, name, tags = t
+                break
+        ALL_TASKS.append(parse_task(contest, problem, name, tags, None))
+
+    refresh(ALL_TASKS, ALL_SOLUTIONS)
 
 
-with db.atomic():
-    for batch in chunked(ALL_SOLUTIONS, 100):
-        Solutions.insert_many(batch).execute()
-
-
-with db.atomic():
-    for batch in chunked(ALL_TASKS, 100):
-        Tasks.insert_many(batch).execute()
+if __name__ == "__main__":
+    main()

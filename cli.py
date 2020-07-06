@@ -29,7 +29,7 @@ def download(arguments):
                 download_contests.add(contest_id)
         else:
             download_tasks.add(argument)
-    print(download_contests, download_tasks)
+    codeforces2html.main(download_contests, download_tasks, tqdm_debug=True)
 
 
 if __name__ == "__main__":

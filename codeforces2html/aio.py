@@ -6,6 +6,7 @@ from typing import Tuple, Union
 import aiohttp
 from lxml.html import HtmlElement, fromstring
 from tqdm import tqdm
+
 from .models import SolutionsArray
 from .utils import materials, parse_blog, problemset
 
@@ -113,19 +114,15 @@ async def get_html_blog(contest_id: int, url: str) -> Tuple[int, str]:
             return contest_id, await resp.text()
 
 
-def parse(contests, tasks):
-    return asyncio.run(build(contests))
-
-
-async def parse_blog_urls(contests):
+async def parse_blog_urls(contests, tqdm_debug=True):
     loop = asyncio.get_running_loop()
     blog_urls = []
-
-    ECTRACT_BLOG_URL_BAR = tqdm(
-        range(len(contests)),
-        ascii=" ━",
-        bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
-    )
+    if tqdm_debug:
+        ECTRACT_BLOG_URL_BAR = tqdm(
+            range(len(contests)),
+            ascii=" ━",
+            bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+        )
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for future in asyncio.as_completed(
             [get_html_contest(url) for url in contests]
@@ -134,25 +131,27 @@ async def parse_blog_urls(contests):
             material_url = await loop.run_in_executor(
                 pool, get_materials, contest_html
             )
-            ECTRACT_BLOG_URL_BAR.update()
-            ECTRACT_BLOG_URL_BAR.set_description(
-                "extracting blog url for contest %s" % contest_id
-            )
+            if tqdm_debug:
+                ECTRACT_BLOG_URL_BAR.update()
+                ECTRACT_BLOG_URL_BAR.set_description(
+                    "parse contest %s" % contest_id
+                )
             if material_url is not None:
                 blog_urls.append((contest_id, material_url))
     return blog_urls
 
 
-async def parse_blogs(blog_urls):
+async def parse_blogs(blog_urls, tqdm_debug=True):
     # appending blog.tree for contest
     loop = asyncio.get_running_loop()
     blogs = []
+    if tqdm_debug:
+        PARSE_BLOGS_BAR = tqdm(
+            range(len(blog_urls)),
+            ascii=" ━",
+            bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+        )
 
-    PARSE_BLOGS_BAR = tqdm(
-        range(len(blog_urls)),
-        ascii=" ━",
-        bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
-    )
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for future in asyncio.as_completed(
             [get_html_blog(contest_id, url) for contest_id, url in blog_urls]
@@ -161,23 +160,22 @@ async def parse_blogs(blog_urls):
             solutions = await loop.run_in_executor(
                 pool, parse_blog_from_html, html
             )
-            PARSE_BLOGS_BAR.update()
-            PARSE_BLOGS_BAR.set_description(
-                "parse blog for contest %s" % contest_id
-            )
+            if tqdm_debug:
+                PARSE_BLOGS_BAR.update()
+                PARSE_BLOGS_BAR.set_description("parse blog %s " % contest_id)
             blogs.append((contest_id, solutions))
     return blogs
 
 
-async def parse_tasks(problems):
+async def parse_tasks(problems, tqdm_debug=True):
     loop = asyncio.get_running_loop()
     tasks = []
-
-    PARSE_TASKS_BAR = tqdm(
-        range(len(problems)),
-        ascii=" ━",
-        bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
-    )
+    if tqdm_debug:
+        PARSE_TASKS_BAR = tqdm(
+            range(len(problems)),
+            ascii=" ━",
+            bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+        )
 
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for future in asyncio.as_completed(
@@ -188,31 +186,36 @@ async def parse_tasks(problems):
         ):
             contest_id, task_letter, task_html = await future
             task_tree = await loop.run_in_executor(pool, get_tree, task_html)
-            PARSE_TASKS_BAR.update()
-            PARSE_TASKS_BAR.set_description(
-                f"parse task {contest_id}{task_letter}"
-            )
+            if tqdm_debug:
+                PARSE_TASKS_BAR.update()
+                PARSE_TASKS_BAR.set_description(
+                    f"parse task {contest_id}{task_letter}"
+                )
             tasks.append((contest_id, task_letter, task_tree))
     return tasks
 
 
-async def build(contests):
-    loop = asyncio.get_running_loop()
+async def async_parse(contests, additional_tasks, tqdm_debug=True):
     tasks, last_contest = problemset()
 
-    blog_urls = await parse_blog_urls(contests)
-    blogs = await parse_blogs(blog_urls)
+    blog_urls = await parse_blog_urls(contests, tqdm_debug)
+    blogs = await parse_blogs(blog_urls, tqdm_debug)
 
     a = AIO(last_contest)
 
     for blog in blogs:
         a.append_blog(*blog)
 
-    problems = []
+    all_tasks = additional_tasks.copy()
     for contest in contests:
-        for problem, _, _ in tasks[contest]:
-            problems.append([contest, problem])
-    tasks = await parse_tasks(problems)
+        for task, _, _ in tasks[contest]:
+            all_tasks.append([contest, task])
+
+    tasks = await parse_tasks(all_tasks, tqdm_debug)
     for task in tasks:
         a.append_task(*task)
     return a
+
+
+def parse(contests, tasks, tqdm_debug=True):
+    return asyncio.run(async_parse(contests, tasks, tqdm_debug))

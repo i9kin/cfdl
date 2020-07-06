@@ -76,5 +76,23 @@ def clean():
     db.create_tables([Tasks, Solutions])
 
 
+def refresh(ALL_TASKS, ALL_SOLUTIONS):
+    Tasks.delete().where(
+        Tasks.id << [task["id"] for task in ALL_TASKS]
+    ).execute()
+    Solutions.delete().where(
+        Solutions.solution_id
+        << [solution["solution_id"] for solution in ALL_SOLUTIONS]
+    ).execute()
+
+    with db.atomic():
+        for batch in chunked(ALL_SOLUTIONS, 100):
+            Solutions.insert_many(batch).execute()
+
+    with db.atomic():
+        for batch in chunked(ALL_TASKS, 100):
+            Tasks.insert_many(batch).execute()
+
+
 if __name__ == "__main__":
     clean()
