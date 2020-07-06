@@ -1,14 +1,19 @@
 import json
+import os
 
 from lxml import html
 from lxml.etree import tostring
 
 from models import Solutions, SolutionsArray
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 
 def problemset():
     # 'https://codeforces.com/api/problemset.problems'
-    data = json.load(open("problemset.txt", "r"))["result"]["problems"]
+    data = json.load(open(f"{dir_path}/problemset.txt", "r"))["result"][
+        "problems"
+    ]
 
     last_contest = data[0]["contestId"]
     tasks = {}

@@ -10,7 +10,16 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = ["Click>=7.0", "requests", "lxml", "peewee", "selenium", "tqdm", "aiohttp", "pdfkit"]
+requirements = [
+    "Click>=7.0",
+    "requests",
+    "lxml",
+    "peewee",
+    "selenium",
+    "tqdm",
+    "aiohttp",
+    "pdfkit",
+]
 
 setup_requirements = [
     "pytest-runner",

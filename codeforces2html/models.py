@@ -1,6 +1,10 @@
+import os
+
 from peewee import *
 
-db = SqliteDatabase("cf.sqlite")
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+db = SqliteDatabase(f"{dir_path}/cf.sqlite")
 
 
 class Tasks(Model):
