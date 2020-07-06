@@ -1,15 +1,83 @@
 # https://ru.stackoverflow.com/questions/899584/async-i-o-multithreading-cpu-%d0%9f%d0%b0%d1%80%d1%81%d0%b8%d0%bd%d0%b3-python
 import asyncio
 import concurrent.futures
+from typing import Tuple, Union
 
 import aiohttp
-from lxml.html import fromstring
+from lxml.html import HtmlElement, fromstring
 from tqdm import tqdm
-
+from .models import SolutionsArray
 from .utils import materials, parse_blog, problemset
 
 
-async def get_html_contest(contest_id):
+class AIO:
+    """class for saving data"""
+
+    def __init__(self, last_contest: int) -> None:
+        self.contests_task = [{} for i in range(last_contest + 1)]
+        self.contests_blog = [None for i in range(last_contest + 1)]
+
+    def append_task(
+        self, contest_id: int, task_letter: str, tree: HtmlElement
+    ) -> None:
+        """
+        :param contest_id: id of the contest
+        :param task_letter: letter of the task
+        :param tree: class lxml.html.HtmlElement of task
+        """
+        self.contests_task[contest_id][task_letter] = tree
+
+    def append_blog(self, contest_id: int, solutions: SolutionsArray) -> None:
+        """
+        :param contest_id: int
+        :param solutions: class of code solutions from current contest blog
+        """
+        self.contests_blog[contest_id] = solutions
+
+    def get_task(self, contest_id: int, task_letter: str) -> HtmlElement:
+        """
+        :param contest_id: id of the contest
+        :param task_letter: letter of the task
+        :return: class lxml.html.HtmlElement of task
+        """
+        return self.contests_task[contest_id][task_letter]
+
+    def get_blog(self, contest_id: int) -> SolutionsArray:
+        """
+        :param contest_id: id of the contest
+        :return: class of code solutions from current contest blog
+        """
+        return self.contests_blog[contest_id]
+
+
+def get_materials(contest_html: str) -> Union[str, None]:
+    """getting the url tutorial for the contest
+
+    :param contest_html: html code of the contest
+    :return: url tutorial or None
+    """
+    material_url = materials(fromstring(contest_html))
+    if material_url is None:
+        return None
+    return f"https://codeforces.com/blog/entry/{material_url}?locale=ru"
+
+
+def get_tree(html: str) -> HtmlElement:
+    """getting the lxml.html.HtmlElement for a url"""
+    return fromstring(html)
+
+
+def parse_blog_from_html(html: str) -> SolutionsArray:
+    """getting class of code solutions from html (tutorial)"""
+    return parse_blog(fromstring(html))
+
+
+async def get_html_contest(contest_id: int) -> Tuple[int, str]:
+    """getting the html code of the contest
+
+    :param contest_id: id of the contest
+    :return: tuple of contest_id and html code of the contest
+    """
     async with aiohttp.ClientSession() as session:
         async with session.get(
             f"https://codeforces.com/contest/{contest_id}?locale=ru"
@@ -17,7 +85,15 @@ async def get_html_contest(contest_id):
             return contest_id, await resp.text()
 
 
-async def get_html_task(contest_id, task_letter):
+async def get_html_task(
+    contest_id: int, task_letter: str
+) -> Tuple[int, str, str]:
+    """getting the html code of the task
+
+    :param contest_id: id of the contest
+    :param task_letter: letter of the task
+    :return: tuple of contest_id, task_letter and html code of the task
+    """
     async with aiohttp.ClientSession() as session:
         async with session.get(
             f"http://codeforces.com/problemset/problem/{contest_id}/{task_letter}?locale=ru"
@@ -25,50 +101,16 @@ async def get_html_task(contest_id, task_letter):
             return contest_id, task_letter, await resp.text()
 
 
-def get_materials(contest_html):
-    # получение url разбора для контеста
-    material_url = materials(fromstring(contest_html))
-    if material_url is None:
-        return None
-    return f"https://codeforces.com/blog/entry/{material_url}?locale=ru"
+async def get_html_blog(contest_id: int, url: str) -> Tuple[int, str]:
+    """getting the html code of the solution
 
-
-class AIO:
-    def __init__(self, last_contest):
-        # last_contest - 1367
-        self.contests_task = [{} for i in range(last_contest + 1)]
-        self.contests_blog = [[] for i in range(last_contest + 1)]
-
-    def append_task(self, contest_id, task_letter, tree):
-        self.contests_task[contest_id][task_letter] = tree
-
-    def get_task(self, contest_id, task_letter):
-        return self.contests_task[contest_id][task_letter]
-
-    def append_blog(self, contest_id, solutions):
-        self.contests_blog[contest_id] = solutions
-
-    def get_blog(self, contest_id):
-        return self.contests_blog[contest_id]
-
-
-def get_tree(html):
-    # получение lxml.tree  для url
-    return fromstring(html)
-
-
-def parse_blog_from_html(html):
-    # получение lxml.tree  для url
-    return parse_blog(fromstring(html))
-
-
-async def get_html_blog(contest_id, url):
+    :param contest_id: id of the contest
+    :param url: of the tutorial
+    :return: tuple of contest_id, html code of the tutorial
+    """
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             return contest_id, await resp.text()
-
-
-# contests, taksks
 
 
 def parse(contests, tasks):
