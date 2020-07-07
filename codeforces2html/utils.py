@@ -9,6 +9,25 @@ from .models import Solutions, SolutionsArray
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
+OLD_ISSUES = [
+    1252,  # (решение pdf (ICPC))
+    1218,  # Bubble Cup 12 (решение pdf)
+    1219,  # Bubble Cup 12 (решение pdf)
+]
+
+ISSUES = [
+    1267,  # (задачи + решение pdf (ICPC))
+    1208,  # (problemTutorial не везде)
+    1191,  # (problemTutorial нет)
+    1190,  # (problemTutorial нет)
+    1184,  # (решение pdf)
+    1172,  # (problemTutorial нет)
+    1173,  # (problemTutorial нет)
+    1153,  # (problemTutorial нет)
+    1129,
+]
+
+
 def problemset():
     # 'https://codeforces.com/api/problemset.problems'
     data = json.load(open(f"{dir_path}/problemset.txt", "r"))["result"][
@@ -87,3 +106,24 @@ def parse_blog(tree):
                 )
 
     return SolutionsArray(solutions)
+
+
+def clean_contests(contests):
+    TASKS, last_contest = problemset()
+    res = []
+    for contest in contests:
+        if contest <= last_contest:
+            res.append(contest)
+    return res
+
+
+def clean_tasks(tasks):
+    TASKS, last_contest = problemset()
+    res = []
+    for task in tasks:
+        for i, char in enumerate(task):
+            if not char.isdigit():
+                if int(task[:i]) not in ISSUES:
+                    res.append([int(task[:i]), task[i:]])
+                break
+    return res
