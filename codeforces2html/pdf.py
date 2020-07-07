@@ -9,7 +9,7 @@ from models import Solutions, SolutionsArray, Tasks
 # pewee -> jinja2 -> (pdfkit, wkhtmltopdf)
 env = Environment(
     loader=FileSystemLoader("templates"),
-    autoescape=select_autoescape(["html", "xml"]),
+    autoescape=select_autoescape(["html"]),
 )
 
 pwd = os.getcwd()
@@ -30,25 +30,14 @@ def render_tasks(tasks):
     )
 
 
-tasks = [task for task in Tasks.select()]
-
+tasks = [task for task in Tasks.select()][:100]
+print(tasks)
 
 options = {
     "page-size": "Letter",
     "no-outline": None,
     "javascript-delay": 2 * len(tasks) * 1000,
 }
-# html = render_tasks(tasks[:100])
-# pdfkit.from_string(html, 'out.pdf',  options=options)
+#html = render_tasks(tasks)
+#pdfkit.from_string(html, 'out.pdf',  options=options)
 
-
-html_ = []
-c = []
-i = 0
-for task in tasks:
-    i += 1
-    html = render_task(task)
-    open(f"tmp/{i}.html", "w").write(html)
-    c.append(f"tmp/{i}.html")
-
-pdfkit.from_file(c, "out.pdf", options=options)

@@ -6,8 +6,13 @@ from peewee import chunked
 from .aio import AIO, parse
 from .bar_urils import Bar
 from .models import Solutions, SolutionsArray, Tasks, clean, db, refresh
-from .utils import (clean_contests, clean_tasks, get_condition,
-                    get_contest_title, problemset)
+from .utils import (
+    clean_contests,
+    clean_tasks,
+    get_condition,
+    get_contest_title,
+    problemset,
+)
 
 REQUESTS = None
 

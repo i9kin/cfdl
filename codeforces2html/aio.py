@@ -10,6 +10,8 @@ from .bar_urils import Bar
 from .models import SolutionsArray
 from .utils import materials, parse_blog, problemset
 
+from .utils import TASKS, last_contest
+
 
 class AIO:
     """class for saving data"""
@@ -179,8 +181,6 @@ async def parse_tasks(problems, debug=True):
 
 
 async def async_parse(contests, additional_tasks, debug=True):
-    tasks, last_contest = problemset()
-
     contests += [task[0] for task in additional_tasks]
 
     blog_urls = await parse_blog_urls(contests, debug)
@@ -193,7 +193,7 @@ async def async_parse(contests, additional_tasks, debug=True):
 
     all_tasks = additional_tasks.copy()
     for contest in contests:
-        for task, _, _ in tasks[contest]:
+        for task, _, _ in TASKS[contest]:
             all_tasks.append([contest, task])
 
     tasks = await parse_tasks(all_tasks, debug)

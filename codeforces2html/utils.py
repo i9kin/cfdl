@@ -109,21 +109,27 @@ def parse_blog(tree):
 
 
 def clean_contests(contests):
-    TASKS, last_contest = problemset()
     res = []
     for contest in contests:
-        if contest <= last_contest:
+        if contest <= last_contest and contest not in ISSUES:
             res.append(contest)
     return res
 
 
 def clean_tasks(tasks):
-    TASKS, last_contest = problemset()
     res = []
     for task in tasks:
+        task = task.upper()
         for i, char in enumerate(task):
             if not char.isdigit():
-                if int(task[:i]) not in ISSUES:
+                if (
+                    int(task[:i]) not in ISSUES
+                    and int(task[:i]) <= last_contest
+                    and task[i:] in [task[0] for task in TASKS[int(task[:i])]]
+                ):
                     res.append([int(task[:i]), task[i:]])
                 break
     return res
+
+
+TASKS, last_contest = problemset()
