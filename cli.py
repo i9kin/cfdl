@@ -2,10 +2,11 @@
 import click
 
 from codeforces2html import codeforces2html
+
+from codeforces2html import xhr
+
 from codeforces2html.models import clean
 from codeforces2html.utils import clean_contests, clean_tasks, problemset
-
-clean()
 
 
 @click.group()
@@ -40,10 +41,25 @@ def download(arguments):
     download_contests = clean_contests(download_contests)
     download_tasks = clean_tasks(list(download_tasks))
     print(download_tasks, download_contests)
-    codeforces2html.main(download_contests, download_tasks, debug=True)
+    # codeforces2html.main(download_contests, download_tasks, debug=True)
+
+
+# cf download 1365-1367 1362A     (xhr support)
+# --pdf (generate pdf)
+# --refresh           not updated if task  in db
+# --debug             +-
+# --lang=ru         (translate)      -
+# cf update         (git  update)    -
+# cf pdf 1365-1367 1362A
+#
+# TODO xhr запрос на мини сервер когда закрытие
+# "~/.cf/config" (как в flask-shop)
 
 
 if __name__ == "__main__":
-    cli()
+    # clean()
+    # cli()
+
+    xhr.main()
 
 # python3 cli.py download 1365-1367 1362A

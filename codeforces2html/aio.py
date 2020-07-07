@@ -18,7 +18,7 @@ class AIO:
 
     def __init__(self, last_contest: int) -> None:
         self.contests_task = [{} for i in range(last_contest + 1)]
-        self.contests_blog = [None for i in range(last_contest + 1)]
+        self.contests_blog = [[] for i in range(last_contest + 1)]
 
     def append_task(
         self, contest_id: int, task_letter: str, tree: HtmlElement

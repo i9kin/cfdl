@@ -38,6 +38,5 @@ options = {
     "no-outline": None,
     "javascript-delay": 2 * len(tasks) * 1000,
 }
-#html = render_tasks(tasks)
-#pdfkit.from_string(html, 'out.pdf',  options=options)
-
+# html = render_tasks(tasks)
+# pdfkit.from_string(html, 'out.pdf',  options=options)
