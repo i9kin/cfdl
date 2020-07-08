@@ -239,9 +239,10 @@ async def async_parse(
     """
     session = aiohttp.ClientSession()
 
-    contests += [task[0] for task in additional_tasks]
+    all_contests = contests + [task[0] for task in additional_tasks]
+    all_contests = list(set(all_contests))
 
-    blog_urls = await parse_blog_urls(session, contests, debug)
+    blog_urls = await parse_blog_urls(session, all_contests, debug)
     blogs = await parse_blogs(session, blog_urls, debug)
 
     a = AIO(last_contest)
@@ -250,7 +251,6 @@ async def async_parse(
         a.append_blog(*blog)
 
     all_tasks = additional_tasks.copy() + get_tasks(contests)
-
     tasks = await parse_tasks(session, all_tasks, debug)
     for task in tasks:
         a.append_task(*task)

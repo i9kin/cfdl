@@ -4,6 +4,7 @@ import aiohttp
 from lxml import html
 from lxml.html import fromstring
 
+from .bar_urils import Bar
 from .models import Tasks
 from .utils import TASKS, clean_contests, get_tasks, last_contest
 
@@ -45,10 +46,13 @@ async def parse(contests, additional_tasks, debug):
     all_tasks = [str(contest_id) + letter for contest_id, letter in all_tasks]
 
     task_map = {}
+    bar = Bar(range(len(all_tasks)), debug=debug)
     for future in asyncio.as_completed(
         [problemData(task, session, csrf_token) for task in all_tasks]
     ):
         task, json = await future
+        bar.update()
+        bar.set_description(f"xhr task {task}")
         if json["success"] == "true":
             task_map[task] = json["html"]
 

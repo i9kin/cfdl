@@ -7,6 +7,7 @@ from .aio import AIO, parse
 from .bar_urils import Bar
 from .models import Solutions, SolutionsArray, Tasks, clean, db, refresh
 from .utils import (
+    TASKS,
     clean_contests,
     clean_tasks,
     get_condition,
@@ -55,49 +56,46 @@ def parse_contest(contest, contest_array):
 
 def main(contests, tasks, debug=True):
     global REQUESTS
-
-    TASKS, last_contest = problemset()
-
     REQUESTS = parse(contests, tasks, debug)
-
-    PROGRESS_BAR = Bar(contests)
-
     ALL_TASKS = []
     ALL_SOLUTIONS = []
 
-    for contest in PROGRESS_BAR:
-        PROGRESS_BAR.set_description("download contest %s" % contest)
-        task_array, solution_array = parse_contest(contest, TASKS[contest])
-        for task in task_array:
+    if len(contests) != 0:
+        PROGRESS_BAR = Bar(contests, debug=debug)
+        for contest in PROGRESS_BAR:
+            PROGRESS_BAR.set_description("download contest %s" % contest)
+            task_array, solution_array = parse_contest(contest, TASKS[contest])
+            for task in task_array:
+                ALL_TASKS.append(task)
+            for solution in solution_array:
+                ALL_SOLUTIONS.append(solution)
+    if len(tasks) != 0:
+        PROGRESS_BAR = Bar(tasks, debug=debug)
+        for contest_id, task_leter in PROGRESS_BAR:
+            PROGRESS_BAR.set_description(
+                f"download task {contest_id}{task_leter}"
+            )
+
+            problem, name, tags = None, None, None
+            for t in TASKS[contest_id]:
+                if t[0] == task_leter:
+                    problem, name, tags = t
+                    break
+            task = parse_task(contest_id, problem, name, tags, None)
+
+            solutions = REQUESTS.get_blog(contest_id)
+
+            if solutions == []:
+                solutions = SolutionsArray([])
+            solution_array = solutions[f"{contest_id}{task_leter}"]
+
+            task["solution"] = ",".join(
+                [solution["solution_id"] for solution in solution_array]
+            )
             ALL_TASKS.append(task)
-        for solution in solution_array:
-            ALL_SOLUTIONS.append(solution)
 
-    PROGRESS_BAR = Bar(tasks)
-
-    for contest_id, task_leter in PROGRESS_BAR:
-        PROGRESS_BAR.set_description(f"download task {contest_id}{task_leter}")
-
-        problem, name, tags = None, None, None
-        for t in TASKS[contest_id]:
-            if t[0] == task_leter:
-                problem, name, tags = t
-                break
-        task = parse_task(contest_id, problem, name, tags, None)
-
-        solutions = REQUESTS.get_blog(contest_id)
-
-        if solutions == []:
-            solutions = SolutionsArray([])
-        solution_array = solutions[f"{contest_id}{task_leter}"]
-
-        task["solution"] = ",".join(
-            [solution["solution_id"] for solution in solution_array]
-        )
-        ALL_TASKS.append(task)
-
-        for solution in solution_array:
-            ALL_SOLUTIONS.append(solution)
+            for solution in solution_array:
+                ALL_SOLUTIONS.append(solution)
 
     refresh(ALL_TASKS, ALL_SOLUTIONS)
 
