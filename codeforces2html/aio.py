@@ -1,29 +1,30 @@
 # https://ru.stackoverflow.com/questions/899584/async-i-o-multithreading-cpu-%d0%9f%d0%b0%d1%80%d1%81%d0%b8%d0%bd%d0%b3-python
+"""aio.py
+============
+Module for fast and asynchronous requests to the server to get information.
+
+Because of this, maximum performance is achieved
+
+use aiohttp(asyncio requests) + ThreadPoolExecutor(pool of threads)
+"""
 import asyncio
 import concurrent.futures
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 import aiohttp
 from lxml.html import HtmlElement, fromstring
 
 from .bar_urils import Bar
 from .models import SolutionsArray
-from .utils import (
-    TASKS,
-    get_tasks,
-    last_contest,
-    materials,
-    parse_blog,
-    problemset,
-)
+from .utils import get_tasks, last_contest, materials, parse_blog
 
 
 class AIO:
     """class for saving data"""
 
     def __init__(self, last_contest: int) -> None:
-        self.contests_task = [{} for i in range(last_contest + 1)]
-        self.contests_blog = [[] for i in range(last_contest + 1)]
+        self.contests_task = [{} for _ in range(last_contest + 1)]
+        self.contests_blog = [[] for _ in range(last_contest + 1)]
 
     def append_task(
         self, contest_id: int, task_letter: str, tree: HtmlElement
@@ -81,10 +82,11 @@ def parse_blog_from_html(html: str) -> SolutionsArray:
 
 
 async def get_html_task(
-    session, contest_id: int, task_letter: str
+    session: aiohttp.ClientSession, contest_id: int, task_letter: str
 ) -> Tuple[int, str, str]:
-    """getting the html code of the task
+    """getting condition (the html code) of the task
 
+    :param session: aiohttp.ClientSession
     :param contest_id: id of the contest
     :param task_letter: letter of the task
     :return: tuple of contest_id, task_letter and html code of the task
@@ -96,20 +98,26 @@ async def get_html_task(
         return contest_id, task_letter, await resp.text()
 
 
-async def get_html_blog(session, contest_id: int, url: str) -> Tuple[int, str]:
-    """getting the html code of the solution
+async def get_html_blog(
+    session: aiohttp.ClientSession, contest_id: int, url: str
+) -> Tuple[int, str]:
+    """getting the html code of the blog
 
+    :param session: aiohttp.ClientSession
     :param contest_id: id of the contest
     :param url: of the tutorial
-    :return: tuple of contest_id, html code of the tutorial
+    :return: tuple of contest_id, html code of the blog
     """
     async with session.get(url) as resp:
         return contest_id, await resp.text()
 
 
-async def get_html_contest(session, contest_id: int) -> Tuple[int, str]:
+async def get_html_contest(
+    session: aiohttp.ClientSession, contest_id: int
+) -> Tuple[int, str]:
     """getting the html code of the contest
 
+    :param session: aiohttp.ClientSession
     :param contest_id: id of the contest
     :return: tuple of contest_id and html code of the contest
     """
@@ -119,8 +127,16 @@ async def get_html_contest(session, contest_id: int) -> Tuple[int, str]:
         return contest_id, await resp.text()
 
 
-async def parse_blog_urls(session, contests, debug=True):
+async def parse_blog_urls(
+    session: aiohttp.ClientSession, contests: List[int], debug: bool = True
+) -> List[Tuple[int, str]]:
+    """getting the url of the blog (tutorial) for the contests
 
+    :param session: aiohttp.ClientSession
+    :param contests: [contest_id, ...]
+    :param debug: if true show bar
+    :return: list of tuple(contest_id, url of the blog (tutorial) for the contest)
+    """
     loop = asyncio.get_running_loop()
     blog_urls = []
     bar = Bar(range(len(contests)), debug=debug)
@@ -142,8 +158,18 @@ async def parse_blog_urls(session, contests, debug=True):
     return blog_urls
 
 
-async def parse_blogs(session, blog_urls, debug=True):
-    # appending blog.tree for contest
+async def parse_blogs(
+    session: aiohttp.ClientSession,
+    blog_urls: List[Tuple[int, str]],
+    debug: bool = True,
+) -> List[Tuple[int, SolutionsArray]]:
+    """getting the solutions from the the blog (tutorial) for the contests
+
+    :param session: aiohttp.ClientSession
+    :param blog_urls: [(contest_id, url_blog for this contest), .....]
+    :param debug: if true show bar
+    :return: list of tuple(contest_id, solutions for this contest)
+    """
     loop = asyncio.get_running_loop()
     blogs = []
 
@@ -166,8 +192,18 @@ async def parse_blogs(session, blog_urls, debug=True):
     return blogs
 
 
-async def parse_tasks(session, problems, debug=True):
+async def parse_tasks(
+    session: aiohttp.ClientSession,
+    problems: List[Tuple[int, str]],
+    debug: bool = True,
+) -> List[Tuple[int, str, HtmlElement]]:
+    """getting the condition of the tasks
 
+    :param session: aiohttp.ClientSession
+    :param problems: [(contest_id, task_letter), ....]
+    :param debug: if true show bar
+    :return: [(contest_id, task_letter, HtmlElement), ...]
+    """
     loop = asyncio.get_running_loop()
     tasks = []
     bar = Bar(range(len(problems)), debug=debug)
@@ -189,8 +225,18 @@ async def parse_tasks(session, problems, debug=True):
     return tasks
 
 
-async def async_parse(contests, additional_tasks, debug=True):
+async def async_parse(
+    contests: List[int],
+    additional_tasks: List[Tuple[int, str]],
+    debug: bool = True,
+) -> AIO:
+    """getting and adding all information for the contests and tasks
 
+    :param contests: [contest_id, ...]
+    :param additional_tasks: [(contest_id, task_letter), ....]
+    :param debug: if true show bar
+    :return: AIO class
+    """
     session = aiohttp.ClientSession()
 
     contests += [task[0] for task in additional_tasks]
@@ -213,5 +259,16 @@ async def async_parse(contests, additional_tasks, debug=True):
     return a
 
 
-def parse(contests, tasks, debug=True):
-    return asyncio.run(async_parse(contests.copy(), tasks, debug))
+def parse(
+    contests: List[int],
+    additional_tasks: List[Tuple[int, str]],
+    debug: bool = True,
+) -> AIO:
+    """run async function async_parse
+
+    :param contests: [contest_id, ...]
+    :param additional_tasks: [(contest_id, task_letter), ....]
+    :param debug: if true show bar
+    :return: AIO class
+    """
+    return asyncio.run(async_parse(contests, additional_tasks, debug))
