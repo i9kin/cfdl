@@ -1,61 +1,71 @@
-import json
-import time
-import os
-from selenium import webdriver
+import asyncio
 
-from .models import Solutions, Tasks, Tutorials
-from .utils import TASKS
+import aiohttp
+from lxml import html
+from lxml.html import fromstring
+
+from .models import Tasks
+from .utils import TASKS, clean_contests, get_tasks, last_contest
+
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+}
 
 
-def main():
+async def get_token(session):
+    resp = await session.get("https://codeforces.com/profile/MiFaFaOvO")
+    async with resp:
+        html = await resp.text()
+        return (
+            fromstring(html)
+            .xpath('//*[@id="body"]/div[3]/div[5]/form/input[1]')[0]
+            .get("value")
+        )
 
-    contests, additional_tasks = [1365, 1366, 1367], [[1362, "A"]]
 
-    all_tasks = []
+async def problemData(task, session, csrf_token):
+    resp = await session.post(
+        "https://codeforces.com/data/problemTutorial",
+        data={"problemCode": task, "csrf_token": csrf_token,},
+        headers={
+            "x-requested-with": "XMLHttpRequest",
+            "x-csrf-token": csrf_token,
+        },
+    )
+    async with resp:
+        return (task, await resp.json())
 
-    for task in additional_tasks:
-        all_tasks.append(f"{task[0]}{task[1]}")
 
-    for contest in contests:
-        for task, _, _ in TASKS[contest]:
-            all_tasks.append(f"{contest}{task}")
+async def parse(contests, additional_tasks, debug):
+    session = aiohttp.ClientSession(headers=headers)
+    loop = asyncio.get_event_loop()
+    csrf_token = await get_token(session)
+
+    all_tasks = additional_tasks.copy() + get_tasks(contests)
+    all_tasks = [str(contest_id) + letter for contest_id, letter in all_tasks]
+
+    task_map = {}
+    for future in asyncio.as_completed(
+        [problemData(task, session, csrf_token) for task in all_tasks]
+    ):
+        task, json = await future
+        if json["success"] == "true":
+            task_map[task] = json["html"]
+
+    all_tasks = [task for task in task_map]
 
     task_models = Tasks.select().where(
         Tasks.id << [task for task in all_tasks]
     )
-
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-
-    driver = webdriver.Chrome(f"{dir_path}/chromedriver")
-    driver.get("https://codeforces.com/topic/73635/")
-
-    javascript_function = """
-    task_html = {}
-    function load_task(problemCode) {
-        return $.post('https://codeforces.com/data/problemTutorial', {
-            problemCode: problemCode
-        }, function(data) {
-          task_html[problemCode] = data["html"];
-        }, "json");
-    }
-    """
-
-    javascript_exctract = """
-    for (code in problem_codes) {
-        load_task(problem_codes[code])
-    }
-    """
-    s = f"""
-    {javascript_function}
-    problem_codes = {[task.id for task in task_models]}
-    {javascript_exctract}
-    """
-    print(s, [task.id for task in task_models])
-    driver.execute_script(s)
-    time.sleep(10)
-    task_map = driver.execute_script("return task_html")
-    print([k for k in task_map])
-
     for task in task_models:
         task.tutorial = task_map[task.id]
         task.save()
+    await session.close()
+
+
+def main(contests, additional_tasks, debug=True):
+    asyncio.run(parse(contests, additional_tasks, debug=debug))
+
+
+if __name__ == "__main__":
+    main()

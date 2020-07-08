@@ -8,9 +8,14 @@ from lxml.html import HtmlElement, fromstring
 
 from .bar_urils import Bar
 from .models import SolutionsArray
-from .utils import materials, parse_blog, problemset
-
-from .utils import TASKS, last_contest
+from .utils import (
+    TASKS,
+    get_tasks,
+    last_contest,
+    materials,
+    parse_blog,
+    problemset,
+)
 
 
 class AIO:
@@ -75,21 +80,8 @@ def parse_blog_from_html(html: str) -> SolutionsArray:
     return parse_blog(fromstring(html))
 
 
-async def get_html_contest(contest_id: int) -> Tuple[int, str]:
-    """getting the html code of the contest
-
-    :param contest_id: id of the contest
-    :return: tuple of contest_id and html code of the contest
-    """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"https://codeforces.com/contest/{contest_id}?locale=ru"
-        ) as resp:
-            return contest_id, await resp.text()
-
-
 async def get_html_task(
-    contest_id: int, task_letter: str
+    session, contest_id: int, task_letter: str
 ) -> Tuple[int, str, str]:
     """getting the html code of the task
 
@@ -97,33 +89,45 @@ async def get_html_task(
     :param task_letter: letter of the task
     :return: tuple of contest_id, task_letter and html code of the task
     """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"http://codeforces.com/problemset/problem/{contest_id}/{task_letter}?locale=ru"
-        ) as resp:
-            return contest_id, task_letter, await resp.text()
+
+    async with session.get(
+        f"http://codeforces.com/problemset/problem/{contest_id}/{task_letter}?locale=ru"
+    ) as resp:
+        return contest_id, task_letter, await resp.text()
 
 
-async def get_html_blog(contest_id: int, url: str) -> Tuple[int, str]:
+async def get_html_blog(session, contest_id: int, url: str) -> Tuple[int, str]:
     """getting the html code of the solution
 
     :param contest_id: id of the contest
     :param url: of the tutorial
     :return: tuple of contest_id, html code of the tutorial
     """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            return contest_id, await resp.text()
+    async with session.get(url) as resp:
+        return contest_id, await resp.text()
 
 
-async def parse_blog_urls(contests, debug=True):
+async def get_html_contest(session, contest_id: int) -> Tuple[int, str]:
+    """getting the html code of the contest
+
+    :param contest_id: id of the contest
+    :return: tuple of contest_id and html code of the contest
+    """
+    async with session.get(
+        f"https://codeforces.com/contest/{contest_id}?locale=ru"
+    ) as resp:
+        return contest_id, await resp.text()
+
+
+async def parse_blog_urls(session, contests, debug=True):
+
     loop = asyncio.get_running_loop()
     blog_urls = []
     bar = Bar(range(len(contests)), debug=debug)
 
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for future in asyncio.as_completed(
-            [get_html_contest(url) for url in contests]
+            [get_html_contest(session, url) for url in contests]
         ):
             contest_id, contest_html = await future
             material_url = await loop.run_in_executor(
@@ -138,7 +142,7 @@ async def parse_blog_urls(contests, debug=True):
     return blog_urls
 
 
-async def parse_blogs(blog_urls, debug=True):
+async def parse_blogs(session, blog_urls, debug=True):
     # appending blog.tree for contest
     loop = asyncio.get_running_loop()
     blogs = []
@@ -147,7 +151,10 @@ async def parse_blogs(blog_urls, debug=True):
 
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for future in asyncio.as_completed(
-            [get_html_blog(contest_id, url) for contest_id, url in blog_urls]
+            [
+                get_html_blog(session, contest_id, url)
+                for contest_id, url in blog_urls
+            ]
         ):
             contest_id, html = await future
             solutions = await loop.run_in_executor(
@@ -159,7 +166,8 @@ async def parse_blogs(blog_urls, debug=True):
     return blogs
 
 
-async def parse_tasks(problems, debug=True):
+async def parse_tasks(session, problems, debug=True):
+
     loop = asyncio.get_running_loop()
     tasks = []
     bar = Bar(range(len(problems)), debug=debug)
@@ -167,7 +175,7 @@ async def parse_tasks(problems, debug=True):
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for future in asyncio.as_completed(
             [
-                get_html_task(contest_id, contest_leter)
+                get_html_task(session, contest_id, contest_leter)
                 for contest_id, contest_leter in problems
             ]
         ):
@@ -177,28 +185,31 @@ async def parse_tasks(problems, debug=True):
             bar.update()
             bar.set_description(f"parse task {contest_id}{task_letter}")
             tasks.append((contest_id, task_letter, task_tree))
+
     return tasks
 
 
 async def async_parse(contests, additional_tasks, debug=True):
+
+    session = aiohttp.ClientSession()
+
     contests += [task[0] for task in additional_tasks]
 
-    blog_urls = await parse_blog_urls(contests, debug)
-    blogs = await parse_blogs(blog_urls, debug)
+    blog_urls = await parse_blog_urls(session, contests, debug)
+    blogs = await parse_blogs(session, blog_urls, debug)
 
     a = AIO(last_contest)
 
     for blog in blogs:
         a.append_blog(*blog)
 
-    all_tasks = additional_tasks.copy()
-    for contest in contests:
-        for task, _, _ in TASKS[contest]:
-            all_tasks.append([contest, task])
+    all_tasks = additional_tasks.copy() + get_tasks(contests)
 
-    tasks = await parse_tasks(all_tasks, debug)
+    tasks = await parse_tasks(session, all_tasks, debug)
     for task in tasks:
         a.append_task(*task)
+
+    await session.close()
     return a
 
 
