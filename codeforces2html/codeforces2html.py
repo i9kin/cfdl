@@ -40,6 +40,7 @@ def parse_contest(contest, contest_array):
     if solutions == []:
         solutions = SolutionsArray([])
     contest_title = None
+    print(contest_array)
     for i, (problem, name, tags) in enumerate(contest_array):
         task = parse_task(contest, problem, name, tags, contest_title)
         if i == 0:

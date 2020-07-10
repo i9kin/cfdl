@@ -1,13 +1,10 @@
-import json
-import os
+import asyncio
 
+import aiohttp
 from lxml import html
 from lxml.etree import tostring
 
 from .models import Solutions, SolutionsArray
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
 
 OLD_ISSUES = [
     1252,  # (решение pdf (ICPC))
@@ -28,11 +25,17 @@ ISSUES = [
 ]
 
 
+async def get_problemset():
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://codeforces.com/api/problemset.problems"
+        ) as response:
+            return await response.json()
+
+
 def problemset():
-    # 'https://codeforces.com/api/problemset.problems'
-    data = json.load(open(f"{dir_path}/problemset.txt", "r"))["result"][
-        "problems"
-    ]
+    data = asyncio.run(get_problemset())
+    data = data["result"]["problems"]
 
     last_contest = data[0]["contestId"]
     tasks = {}
@@ -45,6 +48,8 @@ def problemset():
             tasks[id] = [[index, name, tags]]
         else:
             tasks[id].append([index, name, tags])
+    for key in tasks:
+        tasks[key].sort()
     return tasks, last_contest
 
 
