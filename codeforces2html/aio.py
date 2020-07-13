@@ -16,7 +16,12 @@ from lxml.html import HtmlElement, fromstring
 
 from .bar_urils import Bar
 from .models import SolutionsArray
-from .utils import get_tasks, last_contest, materials, parse_blog
+from .utils import get_tasks, last_contest, materials, parse_blog, html_print
+
+
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+}
 
 
 class AIO:
@@ -121,8 +126,9 @@ async def get_html_contest(
     :param contest_id: id of the contest
     :return: tuple of contest_id and html code of the contest
     """
+
     async with session.get(
-        f"https://codeforces.com/contest/{contest_id}?locale=ru"
+        f"http://codeforces.com/contest/{contest_id}?locale=ru"
     ) as resp:
         return contest_id, await resp.text()
 
@@ -228,16 +234,18 @@ async def parse_tasks(
 async def async_parse(
     contests: List[int],
     additional_tasks: List[Tuple[int, str]],
+    RCPC: str,
     debug: bool = True,
 ) -> AIO:
     """getting and adding all information for the contests and tasks
 
     :param contests: [contest_id, ...]
     :param additional_tasks: [(contest_id, task_letter), ....]
+    :param RCPC rsa decrypt (js)
     :param debug: if true show bar
     :return: AIO class
     """
-    session = aiohttp.ClientSession()
+    session = aiohttp.ClientSession(cookies={"RCPC": RCPC})
 
     all_contests = contests + [task[0] for task in additional_tasks]
     all_contests = list(set(all_contests))
@@ -262,13 +270,15 @@ async def async_parse(
 def parse(
     contests: List[int],
     additional_tasks: List[Tuple[int, str]],
+    RCPC: str,
     debug: bool = True,
 ) -> AIO:
     """run async function async_parse
 
     :param contests: [contest_id, ...]
     :param additional_tasks: [(contest_id, task_letter), ....]
+    :param RCPC rsa decrypt (js)
     :param debug: if true show bar
     :return: AIO class
     """
-    return asyncio.run(async_parse(contests, additional_tasks, debug))
+    return asyncio.run(async_parse(contests, additional_tasks, RCPC, debug))

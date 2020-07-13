@@ -3,8 +3,10 @@ import asyncio
 import aiohttp
 from lxml import html
 from lxml.etree import tostring
+from lxml.html import HtmlElement, fromstring
 
 from .models import Solutions, SolutionsArray
+from .error import error
 
 OLD_ISSUES = [
     1252,  # (решение pdf (ICPC))
@@ -28,9 +30,12 @@ ISSUES = [
 async def get_problemset():
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            "https://codeforces.com/api/problemset.problems"
+            "https://codeforces.com/api/problemset.problems?lang=ru"
         ) as response:
-            return await response.json()
+            if response.status == 200:
+                return await response.json()
+            else:
+                error()
 
 
 def problemset():
@@ -123,6 +128,19 @@ def clean_contests(contests):
         ):
             res.append(contest)
     return res
+
+
+def html_print(tree):
+    if type(tree) == str:
+        tree = fromstring(tree)
+    return tostring(tree, encoding="utf-8", pretty_print=True).decode("utf-8")
+
+
+def parse_wait(html):
+    tree = fromstring(html)
+    # waiting  like https://codeforces.com/contest/1361?locale=ru&f0a28=1
+    # a = tostring(tree, encoding="utf-8", pretty_print=True).decode("utf-8")
+    # print(a)
 
 
 def clean_tasks(tasks):

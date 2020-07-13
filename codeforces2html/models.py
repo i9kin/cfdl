@@ -71,7 +71,7 @@ class SolutionsArray:
         return str(len(self.m))
 
 
-def clean():
+def clean_database():
     db.drop_tables([Tasks, Solutions])
     db.create_tables([Tasks, Solutions])
 

@@ -37,8 +37,8 @@ async def problemData(task, session, csrf_token):
         return (task, await resp.json())
 
 
-async def parse(contests, additional_tasks, debug):
-    session = aiohttp.ClientSession(headers=headers)
+async def parse(contests, additional_tasks, RCPC, debug):
+    session = aiohttp.ClientSession(headers=headers, cookies={"RCPC": RCPC})
     loop = asyncio.get_event_loop()
     csrf_token = await get_token(session)
 
@@ -67,8 +67,8 @@ async def parse(contests, additional_tasks, debug):
     await session.close()
 
 
-def main(contests, additional_tasks, debug=True):
-    asyncio.run(parse(contests, additional_tasks, debug=debug))
+def main(contests, additional_tasks, RCPC, debug=True):
+    asyncio.run(parse(contests, additional_tasks, RCPC, debug=debug))
 
 
 if __name__ == "__main__":

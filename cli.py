@@ -14,6 +14,15 @@
 # TODO xhr запрос на мини сервер когда закрытие
 # "~/.cf/config" (как в flask-shop)
 # 200 status code
+#
+#
+#
+# TODO
+# 1. clean +
+#    tutorial
+# 2. --with-solution --with-code pdf command
+# 3. code for task from top
+# 4. link parser
 
 import io
 
@@ -23,16 +32,18 @@ from rich.console import Console
 from codeforces2html import __version__, codeforces2html
 from codeforces2html import pdf as topdf
 from codeforces2html import xhr
-from codeforces2html.models import clean
+from codeforces2html.models import clean_database
 from codeforces2html.utils import clean_contests, clean_tasks, problemset
 
 download_options = io.StringIO()
 console = Console(file=download_options, force_terminal=True)
 console.print(
     "[red bold]Options:[/]\n"
-    + "  [cyan bold]--pdf[/]    [white bold]Generate pdf.[/white bold]\n"
-    + "  [cyan bold]--degug[/]  [white bold]Show progress bar.[/white bold]\n"
-    + "  [cyan bold]--help[/]   [white bold]Show this message and exit.[/white bold]\n"
+    + "  [cyan bold]--clean[/]        [white bold]Clean database before start[/white bold]\n"
+    + "  [cyan bold]-t --tutorial[/]  [white bold]Save tutorial.[/white bold]\n"
+    + "  [cyan bold]--pdf[/]          [white bold]Generate pdf.[/white bold]\n"
+    + "  [cyan bold]--debug[/]        [white bold]Show progress bar.[/white bold]\n"
+    + "  [cyan bold]--help[/]         [white bold]Show this message and exit.[/white bold]\n"
     + "[magenta bold]Arguments:[/]\n"
     + "  [yellow bold]conetst[/]        {id}          Like 1364\n"
     + "  [yellow bold]conetst-range[/]  {start}-{end} Like 1364-1365\n"
@@ -74,6 +85,7 @@ class CommandHelp(click.Command):
         self.format_options(ctx, formatter)
 
     def format_options(self, ctx, formatter):
+        # super().format_options(ctx, formatter)
         formatter.write(download_options.getvalue())
 
 
@@ -85,8 +97,14 @@ def cli():
 @cli.command(cls=CommandHelp)
 @click.option("--pdf", is_flag=True)
 @click.option("--debug", default=True, is_flag=True)
+@click.option("--clean", default=False, is_flag=True)
+@click.option("-t", "--tutorial", default=False, is_flag=True, help="sdfsafa")
 @click.argument("arguments", nargs=-1)
-def download(arguments, pdf, debug):
+def download(arguments, clean, tutorial, pdf, debug):
+    RCPC = "00d28833206ccd9a67176c3190299d6e"
+
+    if clean:
+        clean_database()
     download_contests = set()
     download_tasks = set()
 
@@ -105,12 +123,8 @@ def download(arguments, pdf, debug):
             download_contests.add(int(argument))
     download_contests = clean_contests(download_contests)
     download_tasks = clean_tasks(list(download_tasks))
-    try:
-        codeforces2html.main(download_contests, download_tasks, debug=debug)
-    except:
-        print('q')
-        pass
-    #xhr.main(download_contests, download_tasks, debug=debug)
+    codeforces2html.main(download_contests, download_tasks, RCPC, debug=debug)
+    xhr.main(download_contests, download_tasks, RCPC, debug=debug)
     if pdf:
         topdf.pdf(download_contests, download_tasks)
 

@@ -5,7 +5,7 @@ from peewee import chunked
 
 from .aio import AIO, parse
 from .bar_urils import Bar
-from .models import Solutions, SolutionsArray, Tasks, clean, db, refresh
+from .models import Solutions, SolutionsArray, Tasks, refresh
 from .utils import (
     TASKS,
     clean_contests,
@@ -13,6 +13,7 @@ from .utils import (
     get_condition,
     get_contest_title,
     problemset,
+    html_print,
 )
 
 REQUESTS = None
@@ -40,7 +41,6 @@ def parse_contest(contest, contest_array):
     if solutions == []:
         solutions = SolutionsArray([])
     contest_title = None
-    print(contest_array)
     for i, (problem, name, tags) in enumerate(contest_array):
         task = parse_task(contest, problem, name, tags, contest_title)
         if i == 0:
@@ -55,9 +55,9 @@ def parse_contest(contest, contest_array):
     return task_array, solutions.array
 
 
-def main(contests, tasks, debug=True):
+def main(contests, tasks, RCPC, debug=True):
     global REQUESTS
-    REQUESTS = parse(contests, tasks, debug)
+    REQUESTS = parse(contests, tasks, RCPC, debug)
     ALL_TASKS = []
     ALL_SOLUTIONS = []
 
