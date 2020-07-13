@@ -41,7 +41,7 @@ console.print(
     "[red bold]Options:[/]\n"
     + "  [cyan bold]--clean[/]        [white bold]Clean database before start[/white bold]\n"
     + "  [cyan bold]-t --tutorial[/]  [white bold]Save tutorial.[/white bold]\n"
-    + "  [cyan bold]--pdf[/]          [white bold]Generate pdf.[/white bold]\n"
+    + "  [cyan bold]--pdf[/]          [white bold]Generate pdf after download.[/white bold]\n"
     + "  [cyan bold]--debug[/]        [white bold]Show progress bar.[/white bold]\n"
     + "  [cyan bold]--help[/]         [white bold]Show this message and exit.[/white bold]\n"
     + "[magenta bold]Arguments:[/]\n"
@@ -98,13 +98,11 @@ def cli():
 @click.option("--pdf", is_flag=True)
 @click.option("--debug", default=True, is_flag=True)
 @click.option("--clean", default=False, is_flag=True)
-@click.option("-t", "--tutorial", default=False, is_flag=True, help="sdfsafa")
+@click.option("-t", "--tutorial", default=False, is_flag=True)
 @click.argument("arguments", nargs=-1)
 def download(arguments, clean, tutorial, pdf, debug):
     RCPC = "00d28833206ccd9a67176c3190299d6e"
 
-    if clean:
-        clean_database()
     download_contests = set()
     download_tasks = set()
 
@@ -123,8 +121,14 @@ def download(arguments, clean, tutorial, pdf, debug):
             download_contests.add(int(argument))
     download_contests = clean_contests(download_contests)
     download_tasks = clean_tasks(list(download_tasks))
+
+    if clean:
+        clean_database()
+
     codeforces2html.main(download_contests, download_tasks, RCPC, debug=debug)
-    xhr.main(download_contests, download_tasks, RCPC, debug=debug)
+    
+    if tutorial:
+        xhr.main(download_contests, download_tasks, RCPC, debug=debug)
     if pdf:
         topdf.pdf(download_contests, download_tasks)
 

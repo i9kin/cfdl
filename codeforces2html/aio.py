@@ -16,8 +16,7 @@ from lxml.html import HtmlElement, fromstring
 
 from .bar_urils import Bar
 from .models import SolutionsArray
-from .utils import get_tasks, last_contest, materials, parse_blog, html_print
-
+from .utils import get_tasks, html_print, last_contest, materials, parse_blog
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",

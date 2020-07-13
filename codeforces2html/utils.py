@@ -5,8 +5,8 @@ from lxml import html
 from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
 
-from .models import Solutions, SolutionsArray
 from .error import error
+from .models import Solutions, SolutionsArray
 
 OLD_ISSUES = [
     1252,  # (решение pdf (ICPC))

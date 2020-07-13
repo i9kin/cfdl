@@ -12,8 +12,8 @@ from .utils import (
     clean_tasks,
     get_condition,
     get_contest_title,
-    problemset,
     html_print,
+    problemset,
 )
 
 REQUESTS = None
