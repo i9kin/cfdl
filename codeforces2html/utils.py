@@ -85,10 +85,14 @@ def materials(tree):
 
 def get_codeforces_submition(html):
     xpath = '//*[@id="program-source-text"]'
-    try:
-        return fromstring(html).xpath(xpath)[0].text
-    except:
-        print("1")
+    return fromstring(html).xpath(xpath)[0].text
+
+
+def parse_link(url, html):
+    if url.startswith("https://codeforces.com"):
+        return get_codeforces_submition(html)
+    elif url.startswith("https://pastebin.com/"):
+        return html
 
 
 def parse_blog(tree):
@@ -117,12 +121,15 @@ def parse_blog(tree):
 
             for link in links:
                 href = link.get("href")
-                if "submission" in href:
+                if "submission" in href or "pastebin" in href:
                     codeforces_submission_href = href
                     # TODO 2 CF links
                     break
 
-        elif "submission" not in codeforces_submission_href:
+        elif (
+            "submission" not in codeforces_submission_href
+            and "pastebin" not in codeforces_submission_href
+        ):
             codeforces_submission_href = None
         if problemcode is not None and codeforces_submission_href is not None:
             if problemcode not in urls:

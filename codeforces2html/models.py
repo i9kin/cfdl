@@ -71,12 +71,6 @@ class SolutionsArray:
         return str(len(self.m))
 
     def update(self, problemcode, submition):
-        from pprint import pprint
-
-        print("q")
-        pprint(problemcode)
-        pprint(submition)
-
         if problemcode not in self.m:
             self.m[problemcode] = [
                 {"solution_id": problemcode + "[0]", "solution": submition}

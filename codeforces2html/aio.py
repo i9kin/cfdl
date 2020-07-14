@@ -23,6 +23,7 @@ from .utils import (
     last_contest,
     materials,
     parse_blog,
+    parse_link,
 )
 
 headers = {
@@ -238,10 +239,8 @@ async def parse_tasks(
 
 
 async def get_html(session, i, problemcode, url: str):
-    if not url.startswith("http"):
-        url = "https://codeforces.com" + url
     async with session.get(url) as resp:
-        return i, problemcode, await resp.text()
+        return i, problemcode, url, await resp.text()
 
 
 async def parse_url_blogs(
@@ -261,6 +260,10 @@ async def parse_url_blogs(
     for i, (contest_id, solution_array) in enumerate(blogs):
         for problemcode in solution_array.urls:
             for url in solution_array.urls[problemcode]:
+                if not url.startswith("http"):
+                    url = "https://codeforces.com" + url
+                elif url.startswith("https://pastebin.com/"):
+                    url = url[:21] + "raw" + "/" + url[21:]
                 urls.append((i, problemcode, url))
 
     loop = asyncio.get_running_loop()
@@ -273,11 +276,8 @@ async def parse_url_blogs(
                 for i, problemcode, url in urls
             ]
         ):
-            i, problemcode, html = await future
-
-            submition = await loop.run_in_executor(
-                pool, get_codeforces_submition, html
-            )
+            i, problemcode, url, html = await future
+            submition = await loop.run_in_executor(pool, parse_link, url, html)
             blogs[i][1].update(problemcode, submition)
 
             bar.update()
