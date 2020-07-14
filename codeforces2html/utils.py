@@ -89,12 +89,28 @@ def parse_blog(tree):
     ].getchildren()
     solutions = []
     prev_code = 0
+    problemcode = None
+
+    urls = {}
 
     for i in range(len(childrens)):
         tag = childrens[i].tag
         html_ = tostring(childrens[i], encoding="utf-8").decode("utf-8")
-
         code = childrens[i].xpath("div/pre/code/text()")
+        codeforces_submission_href = childrens[i].get("href")
+
+        if codeforces_submission_href is None:
+            codeforces_submission = childrens[i].xpath("a")
+            if len(codeforces_submission) != 0:
+                href = codeforces_submission[0].get("href")
+                if "submission" in href:
+                    codeforces_submission_href = href
+        if codeforces_submission_href is not None:
+            if problemcode not in urls:
+                urls[problemcode] = [codeforces_submission_href]
+            else:
+                urls[problemcode].append(codeforces_submission_href)
+
         class_ = childrens[i].get("class")
 
         if len(code) != 0:
@@ -114,8 +130,7 @@ def parse_blog(tree):
                 problemcode = (
                     childrens[i].xpath("div/div")[0].get("problemcode")
                 )
-
-    return SolutionsArray(solutions)
+    return SolutionsArray(solutions, urls)
 
 
 def clean_contests(contests):
@@ -165,6 +180,11 @@ def get_tasks(contests):
         for task, _, _ in TASKS[contest]:
             all_tasks.append([contest, task])
     return all_tasks
+
+
+def get_codeforces_submition(html):
+    xpath = '//*[@id="program-source-text"]'
+    return fromstring(html).xpath(xpath)[0].text
 
 
 TASKS, last_contest = problemset()

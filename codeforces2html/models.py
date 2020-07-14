@@ -51,10 +51,10 @@ class SolutionsArray:
     # Solutions.select().where(Solutions.solution_id.startswith('1361A'))
     # key : string '1361A' val: '1361A[0],...'
 
-    def __init__(self, array):
+    def __init__(self, array, urls={}):
         self.m = {}
-        self.array = array
-        for model in self.array:
+        self.urls = urls
+        for model in array:
             s = model["solution_id"][: model["solution_id"].find("[")]
             if s not in self.m:
                 self.m[s] = [model]
@@ -69,6 +69,26 @@ class SolutionsArray:
 
     def __str__(self):
         return str(len(self.m))
+
+    def update(self, problemcode, submition):
+        if problemcode not in self.m:
+            self.m[problemcode] = [
+                {"solution_id": problemcode + "[0]", "solution": submition}
+            ]
+        else:
+            self.m[problemcode].append(
+                {
+                    "solution_id": f"{problemcode}[{len(self.m[problemcode])}]",
+                    "solution": submition,
+                }
+            )
+
+    def get_array(self):
+        array = []
+        for problemcode in self.m:
+            for model in self.m[problemcode]:
+                array.append(model)
+        return array
 
 
 def clean_database():

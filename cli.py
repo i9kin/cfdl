@@ -102,7 +102,8 @@ def cli():
 @click.argument("arguments", nargs=-1)
 def download(arguments, clean, tutorial, pdf, debug):
     RCPC = "00d28833206ccd9a67176c3190299d6e"
-
+    if clean:
+        clean_database()
     download_contests = set()
     download_tasks = set()
 
@@ -122,11 +123,8 @@ def download(arguments, clean, tutorial, pdf, debug):
     download_contests = clean_contests(download_contests)
     download_tasks = clean_tasks(list(download_tasks))
 
-    if clean:
-        clean_database()
-
     codeforces2html.main(download_contests, download_tasks, RCPC, debug=debug)
-    
+
     if tutorial:
         xhr.main(download_contests, download_tasks, RCPC, debug=debug)
     if pdf:

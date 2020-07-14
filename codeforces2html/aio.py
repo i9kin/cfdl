@@ -16,7 +16,14 @@ from lxml.html import HtmlElement, fromstring
 
 from .bar_urils import Bar
 from .models import SolutionsArray
-from .utils import get_tasks, html_print, last_contest, materials, parse_blog
+from .utils import (
+    get_codeforces_submition,
+    get_tasks,
+    html_print,
+    last_contest,
+    materials,
+    parse_blog,
+)
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
@@ -230,6 +237,54 @@ async def parse_tasks(
     return tasks
 
 
+async def get_html(session, i, problemcode, url: str):
+    if not url.startswith("http"):
+        url = "https://codeforces.com" + url
+    async with session.get(url) as resp:
+        return i, problemcode, await resp.text()
+
+
+async def parse_url_blogs(
+    session: aiohttp.ClientSession,
+    blogs: List[Tuple[int, SolutionsArray]],
+    debug: bool = True,
+) -> List[Tuple[int, SolutionsArray]]:
+    """getting the solutions from the links in the blog (tutorial) for the contests
+    like link (/contest/1372/submission/86603896, (pastebin TODO))
+
+    :param session: aiohttp.ClientSession
+    :param blogs: [(contest_id, SolutionsArray), .....]
+    :param debug: if true show bar
+    :return: list of tuple(contest_id, solutions for this contest)
+    """
+    # all_links
+    urls = []
+    for i, (contest_id, solution_array) in enumerate(blogs):
+        for problemcode in solution_array.urls:
+            for url in solution_array.urls[problemcode]:
+                urls.append((i, problemcode, url))
+
+    loop = asyncio.get_running_loop()
+    tasks = []
+    bar = Bar(range(len(urls)), debug=debug)
+    with concurrent.futures.ThreadPoolExecutor() as pool:
+        for future in asyncio.as_completed(
+            [
+                get_html(session, i, problemcode, url)
+                for i, problemcode, url in urls
+            ]
+        ):
+            i, problemcode, html = await future
+
+            submition = await loop.run_in_executor(
+                pool, get_codeforces_submition, html
+            )
+            blogs[i][1].update(problemcode, submition)
+            
+            bar.update()
+            bar.set_description(f"parse {url}")
+
+
 async def async_parse(
     contests: List[int],
     additional_tasks: List[Tuple[int, str]],
@@ -251,6 +306,8 @@ async def async_parse(
 
     blog_urls = await parse_blog_urls(session, all_contests, debug)
     blogs = await parse_blogs(session, blog_urls, debug)
+
+    await parse_url_blogs(session, blogs, debug)
 
     a = AIO(last_contest)
 

@@ -36,10 +36,13 @@ def parse_task(contest, problem, name, tags, contest_title):
 
 
 def parse_contest(contest, contest_array):
+    from pprint import pprint
+
     task_array = []
     solutions = REQUESTS.get_blog(contest)
     if solutions == []:
         solutions = SolutionsArray([])
+
     contest_title = None
     for i, (problem, name, tags) in enumerate(contest_array):
         task = parse_task(contest, problem, name, tags, contest_title)
@@ -52,7 +55,8 @@ def parse_contest(contest, contest_array):
             ]
         )
         task_array.append(task)
-    return task_array, solutions.array
+
+    return task_array, solutions.get_array()
 
 
 def main(contests, tasks, RCPC, debug=True):
