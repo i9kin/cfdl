@@ -83,6 +83,14 @@ def materials(tree):
     return material_link.split("/")[-1]
 
 
+def get_codeforces_submition(html):
+    xpath = '//*[@id="program-source-text"]'
+    try:
+        return fromstring(html).xpath(xpath)[0].text
+    except:
+        print("1")
+
+
 def parse_blog(tree):
     childrens = tree.xpath('//*[@id="pageContent"]/div/div/div/div[3]/div')[
         0
@@ -97,15 +105,26 @@ def parse_blog(tree):
         tag = childrens[i].tag
         html_ = tostring(childrens[i], encoding="utf-8").decode("utf-8")
         code = childrens[i].xpath("div/pre/code/text()")
+        ##  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #   print(childrens[i].xpath("code/text()"))
+        #  TODO code for 1357 Q# like      !!!!!!!
+        ##  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #
         codeforces_submission_href = childrens[i].get("href")
 
         if codeforces_submission_href is None:
-            codeforces_submission = childrens[i].xpath("a")
-            if len(codeforces_submission) != 0:
-                href = codeforces_submission[0].get("href")
+            links = childrens[i].xpath("a")
+
+            for link in links:
+                href = link.get("href")
                 if "submission" in href:
                     codeforces_submission_href = href
-        if codeforces_submission_href is not None:
+                    # TODO 2 CF links
+                    break
+
+        elif "submission" not in codeforces_submission_href:
+            codeforces_submission_href = None
+        if problemcode is not None and codeforces_submission_href is not None:
             if problemcode not in urls:
                 urls[problemcode] = [codeforces_submission_href]
             else:
@@ -180,11 +199,6 @@ def get_tasks(contests):
         for task, _, _ in TASKS[contest]:
             all_tasks.append([contest, task])
     return all_tasks
-
-
-def get_codeforces_submition(html):
-    xpath = '//*[@id="program-source-text"]'
-    return fromstring(html).xpath(xpath)[0].text
 
 
 TASKS, last_contest = problemset()

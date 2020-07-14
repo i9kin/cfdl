@@ -257,7 +257,6 @@ async def parse_url_blogs(
     :param debug: if true show bar
     :return: list of tuple(contest_id, solutions for this contest)
     """
-    # all_links
     urls = []
     for i, (contest_id, solution_array) in enumerate(blogs):
         for problemcode in solution_array.urls:
@@ -280,9 +279,9 @@ async def parse_url_blogs(
                 pool, get_codeforces_submition, html
             )
             blogs[i][1].update(problemcode, submition)
-            
+
             bar.update()
-            bar.set_description(f"parse {url}")
+            bar.set_description(f"parse {problemcode}")
 
 
 async def async_parse(

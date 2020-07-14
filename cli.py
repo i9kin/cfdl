@@ -26,6 +26,10 @@
 
 import io
 
+from rich.traceback import install
+
+install()
+
 import click
 from rich.console import Console
 

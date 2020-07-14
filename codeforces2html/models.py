@@ -71,6 +71,12 @@ class SolutionsArray:
         return str(len(self.m))
 
     def update(self, problemcode, submition):
+        from pprint import pprint
+
+        print("q")
+        pprint(problemcode)
+        pprint(submition)
+
         if problemcode not in self.m:
             self.m[problemcode] = [
                 {"solution_id": problemcode + "[0]", "solution": submition}
@@ -82,12 +88,17 @@ class SolutionsArray:
                     "solution": submition,
                 }
             )
+        # pprint(self.m[problemcode][-1])
 
     def get_array(self):
+        # from pprint import pprint
+
         array = []
         for problemcode in self.m:
             for model in self.m[problemcode]:
                 array.append(model)
+                # pprint(model)
+
         return array
 
 
@@ -105,6 +116,11 @@ def refresh(ALL_TASKS, ALL_SOLUTIONS):
         << [solution["solution_id"] for solution in ALL_SOLUTIONS]
     ).execute()
 
+    # from pprint import pprint
+
+    # for i in ALL_SOLUTIONS:
+    #    pprint(i)
+    # exit(0)
     with db.atomic():
         for batch in chunked(ALL_SOLUTIONS, 100):
             Solutions.insert_many(batch).execute()
