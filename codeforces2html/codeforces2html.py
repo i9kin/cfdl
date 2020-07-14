@@ -1,20 +1,7 @@
-import asyncio
-import time
-
-from peewee import chunked
-
-from .aio import AIO, parse
+from .aio import parse
 from .bar_urils import Bar
-from .models import Solutions, SolutionsArray, Tasks, refresh
-from .utils import (
-    TASKS,
-    clean_contests,
-    clean_tasks,
-    get_condition,
-    get_contest_title,
-    html_print,
-    problemset,
-)
+from .models import SolutionsArray, refresh
+from .utils import TASKS, get_condition, get_contest_title
 
 REQUESTS = None
 
@@ -104,3 +91,6 @@ def main(contests, tasks, RCPC, debug=True):
 
 if __name__ == "__main__":
     main()
+
+
+__all__ = ["REQUESTS", "main", "parse_contest", "parse_task"]

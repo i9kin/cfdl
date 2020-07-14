@@ -1,12 +1,11 @@
 import asyncio
 
 import aiohttp
-from lxml import html
 from lxml.etree import tostring
-from lxml.html import HtmlElement, fromstring
+from lxml.html import fromstring
 
 from .error import error
-from .models import Solutions, SolutionsArray
+from .models import SolutionsArray
 
 OLD_ISSUES = [
     1252,  # (решение pdf (ICPC))
@@ -28,14 +27,13 @@ ISSUES = [
 
 
 async def get_problemset():
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://codeforces.com/api/problemset.problems?lang=ru"
-        ) as response:
-            if response.status == 200:
-                return await response.json()
-            else:
-                error()
+    async with aiohttp.ClientSession() as session, session.get(
+        "https://codeforces.com/api/problemset.problems?lang=ru"
+    ) as response:
+        if response.status == 200:
+            return await response.json()
+        else:
+            error()
 
 
 def problemset():
@@ -106,14 +104,8 @@ def parse_blog(tree):
     urls = {}
 
     for i in range(len(childrens)):
-        tag = childrens[i].tag
         html_ = tostring(childrens[i], encoding="utf-8").decode("utf-8")
         code = childrens[i].xpath("div/pre/code/text()")
-        ##  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        #   print(childrens[i].xpath("code/text()"))
-        #  TODO code for 1357 Q# like      !!!!!!!
-        ##  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        #
         codeforces_submission_href = childrens[i].get("href")
 
         if codeforces_submission_href is None:
@@ -177,13 +169,6 @@ def html_print(tree):
     return tostring(tree, encoding="utf-8", pretty_print=True).decode("utf-8")
 
 
-def parse_wait(html):
-    tree = fromstring(html)
-    # waiting  like https://codeforces.com/contest/1361?locale=ru&f0a28=1
-    # a = tostring(tree, encoding="utf-8", pretty_print=True).decode("utf-8")
-    # print(a)
-
-
 def clean_tasks(tasks):
     res = []
     for task in tasks:
@@ -209,3 +194,21 @@ def get_tasks(contests):
 
 
 TASKS, last_contest = problemset()
+
+
+__all__ = [
+    "ISSUES",
+    "OLD_ISSUES",
+    "clean_contests",
+    "clean_tasks",
+    "get_codeforces_submition",
+    "get_condition",
+    "get_contest_title",
+    "get_problemset",
+    "get_tasks",
+    "html_print",
+    "materials",
+    "parse_blog",
+    "parse_link",
+    "problemset",
+]

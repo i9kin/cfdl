@@ -1,12 +1,11 @@
 import asyncio
 
 import aiohttp
-from lxml import html
 from lxml.html import fromstring
 
 from .bar_urils import Bar
 from .models import Tasks
-from .utils import TASKS, clean_contests, get_tasks, last_contest
+from .utils import get_tasks
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
@@ -16,9 +15,8 @@ headers = {
 async def get_token(session):
     resp = await session.get("https://codeforces.com/profile/MiFaFaOvO")
     async with resp:
-        html = await resp.text()
         return (
-            fromstring(html)
+            fromstring(await resp.text())
             .xpath('//*[@id="body"]/div[3]/div[5]/form/input[1]')[0]
             .get("value")
         )
@@ -34,12 +32,11 @@ async def problemData(task, session, csrf_token):
         },
     )
     async with resp:
-        return (task, await resp.json())
+        return task, await resp.json()
 
 
 async def parse(contests, additional_tasks, RCPC, debug):
     session = aiohttp.ClientSession(headers=headers, cookies={"RCPC": RCPC})
-    loop = asyncio.get_event_loop()
     csrf_token = await get_token(session)
 
     all_tasks = additional_tasks.copy() + get_tasks(contests)
@@ -73,3 +70,6 @@ def main(contests, additional_tasks, RCPC, debug=True):
 
 if __name__ == "__main__":
     main()
+
+
+__all__ = ["get_token", "headers", "main", "parse", "problemData"]

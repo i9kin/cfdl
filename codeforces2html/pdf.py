@@ -1,5 +1,4 @@
 import os
-import webbrowser
 
 import pdfkit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -37,3 +36,6 @@ def pdf(contests, additional_tasks):
     }
     html = render_tasks(tasks, solutions_array)
     pdfkit.from_string(html, "out.pdf", options=options)
+
+
+__all__ = ["dir_path", "env", "pdf", "render_tasks"]

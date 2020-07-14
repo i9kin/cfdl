@@ -1,6 +1,6 @@
 import os
 
-from peewee import *
+from peewee import CharField, Model, SqliteDatabase, TextField, chunked
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -51,7 +51,11 @@ class SolutionsArray:
     # Solutions.select().where(Solutions.solution_id.startswith('1361A'))
     # key : string '1361A' val: '1361A[0],...'
 
-    def __init__(self, array, urls={}):
+    def __init__(self, array, urls=None):
+
+        if urls is None:
+            urls = {}
+
         self.m = {}
         self.urls = urls
         for model in array:
@@ -125,4 +129,16 @@ def refresh(ALL_TASKS, ALL_SOLUTIONS):
 
 
 if __name__ == "__main__":
-    clean()
+    clean_database()
+
+
+__all__ = [
+    "Solutions",
+    "SolutionsArray",
+    "Tasks",
+    "Tutorials",
+    "clean_database",
+    "db",
+    "dir_path",
+    "refresh",
+]

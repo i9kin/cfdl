@@ -23,3 +23,6 @@ class Bar:
     def update(self):
         if self.debug:
             self.bar.update()
+
+
+__all__ = ["Bar"]
