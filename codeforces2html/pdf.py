@@ -38,7 +38,9 @@ def pdf(contests, additional_tasks):
     pdfkit.from_string(html, "out.pdf", options=options)
 
 
-def html(contests, additional_tasks, tasks_range):
+def html(
+    contests, additional_tasks, divs, letter_range, has_tutorial, has_code
+):
     all_tasks = additional_tasks.copy() + get_tasks(contests)
     all_tasks = [str(contest_id) + letter for contest_id, letter in all_tasks]
 
@@ -46,23 +48,25 @@ def html(contests, additional_tasks, tasks_range):
     tasks = Tasks.select().where(Tasks.id << [task for task in all_tasks])
     tasks = [task for task in tasks]
 
+    m = {
+        "1": ["Div. 1", "Div.1", "Див. 1", "Див.1"],
+        "2": ["Div. 2", "Div.2", "Див. 2", "Див.2"],
+        "3": ["Div. 3", "Div.3", "Див. 3", "Див.3"],
+    }
+
     new = []
     for task in tasks:
-        if "Див. 2" in task.contest_title or "Div. 2" in task.contest_title:
-            if len(task.tutorial) != 0:
-                for i, char in enumerate(task.id):
-                    if not char.isdigit():
-                        id = task.id[i:]
-                        break
+        find = False
+        for div in divs:
+            for string in m[div]:
+                if string in task.contest_title:
+                    find = True
+        if find and (
+            ((has_tutorial and len(task.tutorial) != 0) or not has_tutorial)
+            and ((has_code and len(task.solution) != 0) or not has_code)
+        ):
+            new.append(task)
 
-                if id in tasks_range:
-                    new.append(task)
-
-    options = {
-        "page-size": "Letter",
-        "no-outline": None,
-        "javascript-delay": 2 * len(new) * 1000,
-    }
     html = render_tasks(new, solutions_array)
     open("out.html", "w").write(html)
 

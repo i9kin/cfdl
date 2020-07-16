@@ -43,9 +43,9 @@ def parse_contest(contest, contest_array):
     return task_array, solutions.get_array()
 
 
-def main(contests, tasks, RCPC, debug=True):
+def main(contests, tasks, debug=True):
     global REQUESTS
-    REQUESTS = parse(contests, tasks, RCPC, debug)
+    REQUESTS = parse(contests, tasks, debug)
     ALL_TASKS = []
     ALL_SOLUTIONS = []
 

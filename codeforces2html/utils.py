@@ -74,7 +74,7 @@ def materials(tree):
         materials = tree.xpath(materials_xpath)
     material_link = None
     for material in materials:
-        if "Разбор задач" in material.text_content():
+        if "Tutorial" in material.text_content():
             material_link = material.get("href")
     if material_link is None:
         return None

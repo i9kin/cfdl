@@ -127,7 +127,7 @@ async def get_html_contest(
     """
 
     async with session.get(
-        f"http://codeforces.com/contest/{contest_id}?locale=ru"
+        f"http://codeforces.com/contest/{contest_id}?locale=en"
     ) as resp:
         return contest_id, await resp.text()
 
@@ -278,18 +278,16 @@ async def parse_url_blogs(
 async def async_parse(
     contests: List[int],
     additional_tasks: List[Tuple[int, str]],
-    RCPC: str,
     debug: bool = True,
 ) -> AIO:
     """getting and adding all information for the contests and tasks.
 
     :param contests: [contest_id, ...]
     :param additional_tasks: [(contest_id, task_letter), ....]
-    :param RCPC rsa decrypt (js)
     :param debug: if true show bar
     :return: AIO class
     """
-    session = aiohttp.ClientSession(cookies={"RCPC": RCPC})
+    session = aiohttp.ClientSession()
 
     all_contests = contests + [task[0] for task in additional_tasks]
     all_contests = list(set(all_contests))
@@ -316,18 +314,16 @@ async def async_parse(
 def parse(
     contests: List[int],
     additional_tasks: List[Tuple[int, str]],
-    RCPC: str,
     debug: bool = True,
 ) -> AIO:
     """run async function async_parse.
 
     :param contests: [contest_id, ...]
     :param additional_tasks: [(contest_id, task_letter), ....]
-    :param RCPC rsa decrypt (js)
     :param debug: if true show bar
     :return: AIO class
     """
-    return asyncio.run(async_parse(contests, additional_tasks, RCPC, debug))
+    return asyncio.run(async_parse(contests, additional_tasks, debug))
 
 
 __all__ = [
