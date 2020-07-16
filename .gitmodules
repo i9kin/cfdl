@@ -1,3 +1,4 @@
 [submodule "MathJax"]
-	path = MathJax
-	url = https://github.com/mathjax/MathJax
+  path = MathJax
+  url = https://github.com/mathjax/MathJax
+  branch=419b0a6eee7eefc0f85e47f7d4f8227ec28b8e57
