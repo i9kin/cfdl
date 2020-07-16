@@ -37,6 +37,7 @@ def pdf(contests, additional_tasks):
     html = render_tasks(tasks, solutions_array)
     pdfkit.from_string(html, "out.pdf", options=options)
 
+
 def html(contests, additional_tasks, tasks_range):
     all_tasks = additional_tasks.copy() + get_tasks(contests)
     all_tasks = [str(contest_id) + letter for contest_id, letter in all_tasks]
@@ -47,7 +48,7 @@ def html(contests, additional_tasks, tasks_range):
 
     new = []
     for task in tasks:
-        if 'Див. 2' in task.contest_title or 'Div. 2' in task.contest_title:
+        if "Див. 2" in task.contest_title or "Div. 2" in task.contest_title:
             if len(task.tutorial) != 0:
                 for i, char in enumerate(task.id):
                     if not char.isdigit():
@@ -63,6 +64,7 @@ def html(contests, additional_tasks, tasks_range):
         "javascript-delay": 2 * len(new) * 1000,
     }
     html = render_tasks(new, solutions_array)
-    pdfkit.from_string(html, "out.pdf", options=options)
+    open("out.html", "w").write(html)
+
 
 __all__ = ["dir_path", "env", "pdf", "render_tasks"]

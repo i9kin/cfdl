@@ -40,7 +40,6 @@ from codeforces2html import xhr
 from codeforces2html.models import clean_database
 from codeforces2html.utils import clean_contests, clean_tasks, problemset
 
-
 header = io.StringIO()
 header_console = Console(file=header, force_terminal=True)
 header_console.print(
@@ -75,7 +74,6 @@ pdf_console.print(
 )
 
 
-
 class OrderedGroup(click.Group):
     def __init__(self, name=None, **attrs):
         super().__init__(name, **attrs)
@@ -88,6 +86,7 @@ class OrderedGroup(click.Group):
         formatter.write(download_options.getvalue())
         formatter.write(pdf_options.getvalue())
         formatter.write(arguments.getvalue())
+
 
 class CommandHelp(click.Command):
     def __init__(self, name=None, option=None, **attrs):
@@ -107,9 +106,11 @@ class DownloadHelp(CommandHelp):
     def __init__(self, name=None, **attrs):
         super().__init__(name, **attrs, option=download_options)
 
+
 class PdfHelp(CommandHelp):
     def __init__(self, name=None, **attrs):
         super().__init__(name, **attrs, option=pdf_options)
+
 
 @click.group(cls=OrderedGroup)
 def cli():
@@ -137,6 +138,7 @@ def parse_arguments(arguments):
     download_tasks = clean_tasks(list(download_tasks))
     return download_contests, download_tasks
 
+
 @cli.command(cls=DownloadHelp)
 @click.option("--pdf", is_flag=True)
 @click.option("--debug", default=True, is_flag=True)
@@ -146,7 +148,7 @@ def parse_arguments(arguments):
 def download(arguments, clean, tutorial, pdf, debug):
     RCPC = "00d28833206ccd9a67176c3190299d6e"
     download_contests, download_tasks = parse_arguments(arguments)
-    
+
     if clean:
         clean_database()
 
@@ -163,10 +165,7 @@ def download(arguments, clean, tutorial, pdf, debug):
 @click.argument("arguments", nargs=-1)
 def pdf(arguments, debug):
     download_contests, download_tasks = parse_arguments(arguments)
-    print(download_contests, download_tasks)
-    #print(arguments, debug)
-    #if pdf:
-    topdf.html(download_contests, download_tasks, ['A', 'B', 'C'])
+    topdf.html(download_contests, download_tasks, ["A", "B", "C"])
 
 
 if __name__ == "__main__":
