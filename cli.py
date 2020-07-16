@@ -84,12 +84,22 @@ def download(arguments, clean, tutorial, pdf, debug):
     if tutorial:
         xhr.main(download_contests, download_tasks, debug=debug)
     if pdf:
-        topdf.pdf(download_contests, download_tasks)
+        topdf.generate(
+            download_contests,
+            download_tasks,
+            ['1', '2', '3', '4'],
+            [chr(i) for i in range(ord("A"), ord("Z") + 1)],
+            False,
+            False,
+            True
+        )
+
 
 
 def parse_task_option(options):
     letters = set()
     for option in options:
+        option = option.upper()
         if "-" in option:
             index = option.find("-")
             first, second = option[:index], option[index + 1 :]
@@ -104,24 +114,60 @@ def parse_task_option(options):
 @click.argument("arguments", nargs=-1)
 @click.option("--debug", default=True, is_flag=True)
 @click.option(
-    "--div", default=2, type=click.Choice(["1", "2", "3"]), multiple=True
+    "--div",
+    default=["1", "2", "3", "4"],
+    type=click.Choice(["1", "2", "3", "4"]),
+    multiple=True,
 )
-@click.option("--letter", default="A-Z", type=str, multiple=True)
+@click.option(
+    "--letter",
+    default=[chr(i) for i in range(ord("A"), ord("Z") + 1)],
+    type=str,
+    multiple=True,
+)
 @click.option("-t", "--tutorial", default=False, is_flag=True)
 @click.option("-c", "--code", default=False, is_flag=True)
 def pdf(arguments, debug, div, letter, tutorial, code):
     download_contests, download_tasks = parse_arguments(arguments)
-    topdf.html(
+    topdf.generate(
         download_contests,
         download_tasks,
         div,
         parse_task_option(letter),
         tutorial,
         code,
+        True
+    )
+
+@cli.command(cls=PdfHelp)
+@click.argument("arguments", nargs=-1)
+@click.option("--debug", default=True, is_flag=True)
+@click.option(
+    "--div",
+    default=["1", "2", "3", "4"],
+    type=click.Choice(["1", "2", "3", "4"]),
+    multiple=True,
+)
+@click.option(
+    "--letter",
+    default=[chr(i) for i in range(ord("A"), ord("Z") + 1)],
+    type=str,
+    multiple=True,
+)
+@click.option("-t", "--tutorial", default=False, is_flag=True)
+@click.option("-c", "--code", default=False, is_flag=True)
+def html(arguments, debug, div, letter, tutorial, code):
+    download_contests, download_tasks = parse_arguments(arguments)
+    topdf.generate(
+        download_contests,
+        download_tasks,
+        div,
+        parse_task_option(letter),
+        tutorial,
+        code,
+        False
     )
 
 
 if __name__ == "__main__":
     cli()
-# --div=12 23 123 13
-# F -> F1, F2

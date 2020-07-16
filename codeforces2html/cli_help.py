@@ -34,9 +34,9 @@ arguments_console.print(
 pdf_options = io.StringIO()
 pdf_console = Console(file=pdf_options, force_terminal=True)
 pdf_console.print(
-    "[red bold]Options for pdf command:[/]\n"
+    "[red bold]Options for pdf and html command:[/]\n"
     + "  [cyan bold]--debug[/]        [white bold]Show progress bar.[/]\n"
-    + "  [cyan bold]--div [[1|2|3]][/]  [white bold](multiple) Division of the contest.[/]\n"
+    + "  [cyan bold]--div [[1|2|3|4][/][white bold](multiple) Division of the contest.[/]\n"
     + "  [cyan bold]--letter TEXT[/]  [white bold](multiple) Letter of the problem.[/] Like [blue bold]A[/] or [blue bold]A-C.[/]\n"
     + "  [cyan bold]-t --tutorial[/]  [white bold]Save the tasks if there is an tutorial.[/]\n"
     + "  [cyan bold]-c --code[/]      [white bold]Save the tasks if there has a code.[/]\n"
