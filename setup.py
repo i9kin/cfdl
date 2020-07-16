@@ -62,3 +62,12 @@ setup(
     version="0.1.0",
     zip_safe=False,
 )
+
+
+__all__ = [
+    "history",
+    "readme",
+    "requirements",
+    "setup_requirements",
+    "test_requirements",
+]

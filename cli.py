@@ -87,13 +87,12 @@ def download(arguments, clean, tutorial, pdf, debug):
         topdf.generate(
             download_contests,
             download_tasks,
-            ['1', '2', '3', '4'],
+            ["1", "2", "3", "4"],
             [chr(i) for i in range(ord("A"), ord("Z") + 1)],
             False,
             False,
-            True
+            True,
         )
-
 
 
 def parse_task_option(options):
@@ -107,7 +106,7 @@ def parse_task_option(options):
                 letters.add(chr(char))
         else:
             letters.add(option)
-    return sorted(list(letters))
+    return letters
 
 
 @cli.command(cls=PdfHelp)
@@ -121,7 +120,7 @@ def parse_task_option(options):
 )
 @click.option(
     "--letter",
-    default=[chr(i) for i in range(ord("A"), ord("Z") + 1)],
+    default=set(chr(i) for i in range(ord("A"), ord("Z") + 1)),
     type=str,
     multiple=True,
 )
@@ -136,8 +135,9 @@ def pdf(arguments, debug, div, letter, tutorial, code):
         parse_task_option(letter),
         tutorial,
         code,
-        True
+        True,
     )
+
 
 @cli.command(cls=PdfHelp)
 @click.argument("arguments", nargs=-1)
@@ -150,7 +150,7 @@ def pdf(arguments, debug, div, letter, tutorial, code):
 )
 @click.option(
     "--letter",
-    default=[chr(i) for i in range(ord("A"), ord("Z") + 1)],
+    default=set(chr(i) for i in range(ord("A"), ord("Z") + 1)),
     type=str,
     multiple=True,
 )
@@ -165,9 +165,19 @@ def html(arguments, debug, div, letter, tutorial, code):
         parse_task_option(letter),
         tutorial,
         code,
-        False
+        False,
     )
 
 
 if __name__ == "__main__":
     cli()
+
+
+__all__ = [
+    "cli",
+    "download",
+    "html",
+    "parse_arguments",
+    "parse_task_option",
+    "pdf",
+]

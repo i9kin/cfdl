@@ -9,7 +9,7 @@ header = io.StringIO()
 header_console = Console(file=header, force_terminal=True)
 header_console.print(
     f":bar_chart:[white bold]codeforces {__version__}[/]\n"
-    + f"Usage: cli.py download [red bold][[OPTIONS]][/] [magenta bold][[ARGUMENTS]]...[/]"
+    + "Usage: cli.py download [red bold][[OPTIONS]][/] [magenta bold][[ARGUMENTS]]...[/]"
 )
 
 download_options = io.StringIO()
@@ -79,3 +79,19 @@ class DownloadHelp(CommandHelp):
 class PdfHelp(CommandHelp):
     def __init__(self, name=None, **attrs):
         super().__init__(name, **attrs, option=pdf_options)
+
+
+__all__ = [
+    "CommandHelp",
+    "DownloadHelp",
+    "OrderedGroup",
+    "PdfHelp",
+    "arguments",
+    "arguments_console",
+    "download_console",
+    "download_options",
+    "header",
+    "header_console",
+    "pdf_console",
+    "pdf_options",
+]

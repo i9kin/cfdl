@@ -193,6 +193,12 @@ def get_tasks(contests):
     return all_tasks
 
 
+def get_letter(task_name):
+    for i, char in enumerate(task_name):
+        if not char.isdigit():
+            return task_name[i:]
+
+
 TASKS, last_contest = problemset()
 
 

@@ -4,7 +4,7 @@ import pdfkit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from .models import Solutions, SolutionsArray, Tasks
-from .utils import get_tasks
+from .utils import get_letter, get_tasks
 
 # pewee -> jinja2 -> (pdfkit, wkhtmltopdf)
 
@@ -23,7 +23,13 @@ def render_tasks(tasks, solutions_array):
 
 
 def generate(
-    contests, additional_tasks, divs, letter_range, has_tutorial, has_code, generate_pdf
+    contests,
+    additional_tasks,
+    divs,
+    letter_range,
+    has_tutorial,
+    has_code,
+    generate_pdf,
 ):
     all_tasks = additional_tasks.copy() + get_tasks(contests)
     all_tasks = [str(contest_id) + letter for contest_id, letter in all_tasks]
@@ -38,20 +44,17 @@ def generate(
         "3": ["Div. 3", "Div.3", "Див. 3", "Див.3"],
         "4": ["Div. 4", "Div.4", "Див. 4", "Див.4"],
     }
-
     new = []
     for task in tasks:
-        find = False
-        for letter in letter_range:
-            if letter in task.id:
-                find = True
-        if not find:
+        letter = get_letter(task.id)
+        if letter not in letter_range:
             continue
         find = False
         for div in divs:
             for string in m[div]:
                 if string in task.contest_title:
                     find = True
+                    break
         if find and (
             ((has_tutorial and len(task.tutorial) != 0) or not has_tutorial)
             and ((has_code and len(task.solution) != 0) or not has_code)
