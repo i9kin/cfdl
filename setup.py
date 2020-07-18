@@ -30,7 +30,7 @@ test_requirements = [
 ]
 
 setup(
-    author="Ivan",
+    author="@9kin",
     author_email="cf2html.github@mail.ru",
     python_requires=">=3.5",
     classifiers=[
@@ -46,19 +46,19 @@ setup(
     ],
     description="download task (tutorials) with asyncio",
     entry_points={
-        "console_scripts": ["codeforces2html=codeforces2html.cli:main",],
+        "console_scripts": ["codeforces-dl=codeforces-dl.cli:main",],
     },
     install_requires=requirements,
     license="MIT license",
     long_description=readme + "\n\n" + history,
     include_package_data=True,
-    keywords="codeforces2html",
-    name="codeforces2html",
-    packages=find_packages(include=["codeforces2html", "codeforces2html.*"]),
+    keywords="codeforces-dl",
+    name="codeforces-dl",
+    packages=find_packages(include=["codeforces-dl", "codeforces-dl.*"]),
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
-    url="https://github.com/9kin/codeforces2html",
+    url="https://github.com/9kin/codeforces-dl",
     version="0.1.0",
     zip_safe=False,
 )

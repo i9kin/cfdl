@@ -1,21 +1,21 @@
 ===============
-codeforces2html
+codeforces-dl
 ===============
 
 
-.. image:: https://img.shields.io/pypi/v/codeforces2html.svg
-        :target: https://pypi.python.org/pypi/codeforces2html
+.. image:: https://img.shields.io/pypi/v/codeforces-dl.svg
+        :target: https://pypi.python.org/pypi/codeforces-dl
 
-.. image:: https://img.shields.io/travis/9kin/codeforces2html.svg
-        :target: https://travis-ci.com/9kin/codeforces2html
+.. image:: https://img.shields.io/travis/9kin/codeforces-dl.svg
+        :target: https://travis-ci.com/9kin/codeforces-dl
 
-.. image:: https://readthedocs.org/projects/codeforces2html/badge/?version=latest
-        :target: https://codeforces2html.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/codeforces-dl/badge/?version=latest
+        :target: https://codeforces-dl.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
 
-.. image:: https://pyup.io/repos/github/9kin/codeforces2html/shield.svg
-     :target: https://pyup.io/repos/github/9kin/codeforces2html/
+.. image:: https://pyup.io/repos/github/9kin/codeforces-dl/shield.svg
+     :target: https://pyup.io/repos/github/9kin/codeforces-dl/
      :alt: Updates
 
 
@@ -24,7 +24,7 @@ download task (tutorials) with asyncio
 
 
 * Free software: MIT license
-* Documentation: https://codeforces2html.readthedocs.io.
+* Documentation: https://codeforces-dl.readthedocs.io.
 
 
 Features

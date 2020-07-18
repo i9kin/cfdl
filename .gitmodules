@@ -1,4 +1,4 @@
-[submodule "codeforces2html/MathJax"]
-  path = codeforces2html/MathJax
+[submodule "codeforces-dl/MathJax"]
+  path = codeforces-dl/MathJax
   url = https://github.com/mathjax/MathJax.git
   branch=2.7.5
