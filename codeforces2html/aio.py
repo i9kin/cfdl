@@ -14,13 +14,17 @@ from typing import List, Tuple, Union
 import aiohttp
 from lxml.html import HtmlElement, fromstring
 
-from .bar_urils import Bar
+from .bar_utils import Bar
 from .models import SolutionsArray
-from .utils import get_tasks, last_contest, materials, parse_blog, parse_link
+from .utils import get_tasks, materials, parse_blog, parse_link, problemset
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
 }
+
+import uvloop
+
+uvloop.install()
 
 
 class AIO:
@@ -272,7 +276,7 @@ async def parse_url_blogs(
             blogs[i][1].update(problemcode, submition)
 
             bar.update()
-            bar.set_description(f"parse {problemcode}")
+            bar.set_description(f"parse usls {problemcode}")
 
 
 async def async_parse(
@@ -297,6 +301,7 @@ async def async_parse(
 
     await parse_url_blogs(session, blogs, debug)
 
+    _, last_contest = problemset()
     a = AIO(last_contest)
 
     for blog in blogs:

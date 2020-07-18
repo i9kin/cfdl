@@ -3,12 +3,12 @@ import io
 import click
 from rich.console import Console
 
-from . import __version__
+from . import __author__, __version__
 
 header = io.StringIO()
 header_console = Console(file=header, force_terminal=True)
 header_console.print(
-    f":bar_chart:[white bold]codeforces {__version__}[/]\n"
+    f":bar_chart:[white bold]codeforces {__version__} {__author__}[/]\n"
     + "Usage: cli.py download [red bold][[OPTIONS]][/] [magenta bold][[ARGUMENTS]]...[/]"
 )
 
@@ -26,8 +26,8 @@ arguments = io.StringIO()
 arguments_console = Console(file=arguments, force_terminal=True)
 arguments_console.print(
     "[magenta bold]Arguments:[/]\n"
-    + "  [yellow bold]conetst[/]        {id}          Like 1364\n"
-    + "  [yellow bold]conetst-range[/]  {start}-{end} Like 1364-1365\n"
+    + "  [yellow bold]contest[/]        {id}          Like 1364\n"
+    + "  [yellow bold]contest-range[/]  {start}-{end} Like 1364-1365\n"
     + "  [yellow bold]task[/]           {id}{letter}  Like [blue bold]1364A[/]\n",
 )
 
@@ -38,7 +38,7 @@ pdf_console.print(
     + "  [cyan bold]--debug[/]        [white bold]Show progress bar.[/]\n"
     + "  [cyan bold]--div [[1|2|3|4][/][white bold](multiple) Division of the contest.[/]\n"
     + "  [cyan bold]--letter TEXT[/]  [white bold](multiple) Letter of the problem.[/] Like [blue bold]A[/] or [blue bold]A-C.[/]\n"
-    + "  [cyan bold]-t --tutorial[/]  [white bold]Save the tasks if there is an tutorial.[/]\n"
+    + "  [cyan bold]-t --tutorial[/]  [white bold]Save the tasks if there has tutorial.[/]\n"
     + "  [cyan bold]-c --code[/]      [white bold]Save the tasks if there has a code.[/]\n"
 )
 

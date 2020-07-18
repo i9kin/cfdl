@@ -1,7 +1,7 @@
 from .aio import parse
-from .bar_urils import Bar
+from .bar_utils import Bar
 from .models import SolutionsArray, refresh
-from .utils import TASKS, get_condition, get_contest_title
+from .utils import get_condition, get_contest_title, problemset
 
 REQUESTS = None
 
@@ -45,6 +45,7 @@ def parse_contest(contest, contest_array):
 
 def main(contests, tasks, debug=True):
     global REQUESTS
+    TASKS, last_contest = problemset()
     REQUESTS = parse(contests, tasks, debug)
     ALL_TASKS = []
     ALL_SOLUTIONS = []
@@ -87,10 +88,6 @@ def main(contests, tasks, debug=True):
                 ALL_SOLUTIONS.append(solution)
 
     refresh(ALL_TASKS, ALL_SOLUTIONS)
-
-
-if __name__ == "__main__":
-    main()
 
 
 __all__ = ["REQUESTS", "main", "parse_contest", "parse_task"]

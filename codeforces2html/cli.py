@@ -32,12 +32,12 @@ install()
 
 import click
 
-from codeforces2html import codeforces2html
-from codeforces2html import pdf as topdf
-from codeforces2html import xhr
-from codeforces2html.cli_help import DownloadHelp, OrderedGroup, PdfHelp
-from codeforces2html.models import clean_database
-from codeforces2html.utils import clean_contests, clean_tasks, problemset
+from . import codeforces2html
+from . import pdf as topdf
+from . import xhr
+from .cli_help import DownloadHelp, OrderedGroup, PdfHelp
+from .models import clean_database
+from .utils import clean_contests, clean_tasks, problemset
 
 
 @click.group(cls=OrderedGroup)

@@ -36,7 +36,13 @@ async def get_problemset():
             error()
 
 
+lru_problemset = None
+
+
 def problemset():
+    global lru_problemset
+    if lru_problemset is not None:
+        return lru_problemset
     data = asyncio.run(get_problemset())
     data = data["result"]["problems"]
 
@@ -53,6 +59,8 @@ def problemset():
             tasks[id].append([index, name, tags])
     for key in tasks:
         tasks[key].sort()
+
+    lru_problemset = tasks, last_contest
     return tasks, last_contest
 
 
@@ -152,6 +160,7 @@ def parse_blog(tree):
 
 
 def clean_contests(contests):
+    TASKS, last_contest = problemset()
     res = []
     for contest in contests:
         if (
@@ -170,6 +179,7 @@ def html_print(tree):
 
 
 def clean_tasks(tasks):
+    TASKS, last_contest = problemset()
     res = []
     for task in tasks:
         task = task.upper()
@@ -186,6 +196,7 @@ def clean_tasks(tasks):
 
 
 def get_tasks(contests):
+    TASKS, last_contest = problemset()
     all_tasks = []
     for contest in contests:
         for task, _, _ in TASKS[contest]:
@@ -197,9 +208,6 @@ def get_letter(task_name):
     for i, char in enumerate(task_name):
         if not char.isdigit():
             return task_name[i:]
-
-
-TASKS, last_contest = problemset()
 
 
 __all__ = [

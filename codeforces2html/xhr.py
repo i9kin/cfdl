@@ -1,11 +1,14 @@
 import asyncio
 
 import aiohttp
+import uvloop
 from lxml.html import fromstring
 
-from .bar_urils import Bar
+from .bar_utils import Bar
 from .models import Tasks
 from .utils import get_tasks
+
+uvloop.install()
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
@@ -66,10 +69,6 @@ async def parse(contests, additional_tasks, debug):
 
 def main(contests, additional_tasks, debug=True):
     asyncio.run(parse(contests, additional_tasks, debug=debug))
-
-
-if __name__ == "__main__":
-    main()
 
 
 __all__ = ["get_token", "headers", "main", "parse", "problemData"]
