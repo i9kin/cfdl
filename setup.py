@@ -17,7 +17,7 @@ requirements = [
     "lxml",
     "peewee",
     "tqdm",
-    "aiohttp",
+    "aiohttp==3.6.2",
     "pdfkit",
 ]
 
@@ -45,16 +45,14 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     description="download task (tutorials) with asyncio",
-    entry_points={
-        "console_scripts": ["codeforces-dl=codeforces-dl.cli:main",],
-    },
+    entry_points={"console_scripts": ["kiq = codeforcesdl.cli:main",],},
     install_requires=requirements,
     license="MIT license",
     long_description=readme + "\n\n" + history,
     include_package_data=True,
     keywords="codeforces-dl",
-    name="codeforces-dl",
-    packages=find_packages(include=["codeforces-dl", "codeforces-dl.*"]),
+    name="codeforces-dlqq",
+    packages=find_packages(include=["codeforces-dl"]),
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,

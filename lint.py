@@ -3,8 +3,7 @@ from os import system
 
 import isort
 
-files = glob.glob("*.py") + glob.glob("codeforces2html/*.py")
-
+files = glob.glob("*.py") + glob.glob("codeforces-dl/*.py")
 for file in files:
     isort.file(file)
     system(f"pybetter {file}")

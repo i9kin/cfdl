@@ -4,11 +4,12 @@ from tqdm import tqdm
 class Bar:
     def __init__(self, items, debug=True):
         if debug:
-            self.bar = tqdm(
-                items,
-                ascii=" ━",
-                bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
-            )
+            if len(items) != 0:
+                self.bar = tqdm(
+                    items,
+                    ascii=" ━",
+                    bar_format="{percentage:.0f}%|{rate_fmt}| {desc} |\x1b[31m{bar}\x1b[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}",
+                )
         else:
             self.bar = items
         self.debug = debug

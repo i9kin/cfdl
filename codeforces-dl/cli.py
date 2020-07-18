@@ -36,7 +36,7 @@ from . import download_all
 from . import pdf as topdf
 from . import xhr
 from .cli_help import DownloadHelp, OrderedGroup, PdfHelp
-from .models import clean_database
+from .models import clean_database, fast_insert
 from .utils import clean_contests, clean_tasks, problemset
 
 
@@ -83,6 +83,8 @@ def download(arguments, clean, tutorial, pdf, debug):
 
     if tutorial:
         xhr.main(download_contests, download_tasks, debug=debug)
+    fast_insert()
+
     if pdf:
         topdf.generate(
             download_contests,
@@ -169,8 +171,12 @@ def html(arguments, debug, div, letter, tutorial, code):
     )
 
 
-if __name__ == "__main__":
+def main():
     cli()
+
+
+if __name__ == "__main__":
+    main()
 
 
 __all__ = [

@@ -5,7 +5,7 @@ import uvloop
 from lxml.html import fromstring
 
 from .bar_utils import Bar
-from .models import Tasks
+from .models import Tasks, update_tutorials
 from .utils import get_tasks
 
 uvloop.install()
@@ -45,25 +45,18 @@ async def parse(contests, additional_tasks, debug):
     all_tasks = additional_tasks.copy() + get_tasks(contests)
     all_tasks = [str(contest_id) + letter for contest_id, letter in all_tasks]
 
-    task_map = {}
+    tutorials = []
     bar = Bar(range(len(all_tasks)), debug=debug)
     for future in asyncio.as_completed(
         [problemData(task, session, csrf_token) for task in all_tasks]
     ):
         task, json = await future
         bar.update()
-        bar.set_description(f"xhr task {task}")
+        bar.set_description(f"download tutorial for {task}")
         if json["success"] == "true":
-            task_map[task] = json["html"]
+            tutorials.append((task, json["html"]))
 
-    all_tasks = [task for task in task_map]
-
-    task_models = Tasks.select().where(
-        Tasks.id << [task for task in all_tasks]
-    )
-    for task in task_models:
-        task.tutorial = task_map[task.id]
-        task.save()
+    update_tutorials(tutorials)
     await session.close()
 
 

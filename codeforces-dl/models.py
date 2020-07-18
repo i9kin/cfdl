@@ -1,4 +1,5 @@
 import os
+from typing import List, Tuple, Union
 
 from peewee import CharField, Model, SqliteDatabase, TextField, chunked
 
@@ -86,17 +87,12 @@ class SolutionsArray:
                     "solution": submition,
                 }
             )
-        # pprint(self.m[problemcode][-1])
 
     def get_array(self):
-        # from pprint import pprint
-
         array = []
         for problemcode in self.m:
             for model in self.m[problemcode]:
                 array.append(model)
-                # pprint(model)
-
         return array
 
 
@@ -105,26 +101,43 @@ def clean_database():
     db.create_tables([Tasks, Solutions])
 
 
-def refresh(ALL_TASKS, ALL_SOLUTIONS):
-    Tasks.delete().where(
-        Tasks.id << [task["id"] for task in ALL_TASKS]
-    ).execute()
-    Solutions.delete().where(
-        Solutions.solution_id
-        << [solution["solution_id"] for solution in ALL_SOLUTIONS]
-    ).execute()
+def delete_tasks(tasks_id):
+    Tasks.delete().where(Tasks.id << tasks_id).execute()
 
-    # from pprint import pprint
 
-    # for i in ALL_SOLUTIONS:
-    #    pprint(i)
-    # exit(0)
+def delete_solutions(solutions_id):
+    Solutions.delete().where(Solutions.solution_id << solutions_id).execute()
+
+
+ALL_TASKS, ALL_SOLUTIONS = [], []
+
+
+def update(tasks, solutions):
+    global ALL_TASKS, ALL_SOLUTIONS
+    ALL_TASKS, ALL_SOLUTIONS = tasks, solutions
+
+
+def update_tutorials(tutorials: List[Tuple[str, str]]):
+    global ALL_TASKS
+    tutorials_map = {}
+    for task_id, tutorial in tutorials:
+        tutorials_map[task_id] = tutorial
+    for task in ALL_TASKS:
+        if task["id"] in tutorials_map:
+            task["tutorial"] = tutorials_map[task["id"]]
+
+
+def fast_insert():
+    global ALL_TASKS, ALL_SOLUTIONS
+    delete_tasks([task["id"] for task in ALL_TASKS])
+    delete_solutions([solution["solution_id"] for solution in ALL_SOLUTIONS])
+
     with db.atomic():
-        for batch in chunked(ALL_SOLUTIONS, 100):
+        for batch in chunked(ALL_SOLUTIONS, 1000):
             Solutions.insert_many(batch).execute()
 
     with db.atomic():
-        for batch in chunked(ALL_TASKS, 100):
+        for batch in chunked(ALL_TASKS, 1000):
             Tasks.insert_many(batch).execute()
 
 

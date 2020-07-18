@@ -1,6 +1,6 @@
 from .aio import parse
 from .bar_utils import Bar
-from .models import SolutionsArray, refresh
+from .models import SolutionsArray, update
 from .utils import get_condition, get_contest_title, problemset
 
 REQUESTS = None
@@ -14,7 +14,6 @@ def parse_task(contest, problem, name, tags, contest_title):
         "contest_title": get_contest_title(tree)
         if contest_title is None
         else contest_title,
-
         "condition": get_condition(tree),
         "tutorial": "",
         "solution": "",
@@ -88,8 +87,7 @@ def main(contests, tasks, debug=True):
             for solution in solution_array:
                 ALL_SOLUTIONS.append(solution)
 
-    refresh(ALL_TASKS, ALL_SOLUTIONS)
+    update(ALL_TASKS, ALL_SOLUTIONS)
 
 
 __all__ = ["REQUESTS", "main", "parse_contest", "parse_task"]
-
