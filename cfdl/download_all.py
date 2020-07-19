@@ -83,10 +83,7 @@ def main(contests, tasks, debug=True):
                 [solution["solution_id"] for solution in solution_array]
             )
             ALL_TASKS.append(task)
-
-            for solution in solution_array:
-                ALL_SOLUTIONS.append(solution)
-
+            ALL_SOLUTIONS += solution_array
     update(ALL_TASKS, ALL_SOLUTIONS)
 
 

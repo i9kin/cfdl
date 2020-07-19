@@ -2,6 +2,8 @@
 cfdl
 ===============
 
+.. image:: ./examples/download.svg
+
 
 .. image:: https://img.shields.io/pypi/v/cfdl.svg
         :target: https://pypi.python.org/pypi/cfdl
