@@ -188,6 +188,7 @@ def clean_tasks(tasks):
                 if (
                     int(task[:i]) not in ISSUES
                     and int(task[:i]) <= last_contest
+                    and int(task[:i]) in TASKS
                     and task[i:] in [task[0] for task in TASKS[int(task[:i])]]
                 ):
                     res.append([int(task[:i]), task[i:]])

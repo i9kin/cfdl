@@ -8,8 +8,8 @@ from . import __author__, __version__
 header = io.StringIO()
 header_console = Console(file=header, force_terminal=True)
 header_console.print(
-    f":bar_chart:[white bold]codeforces {__version__} {__author__}[/]\n"
-    + "Usage: cli.py download [red bold][[OPTIONS]][/] [magenta bold][[ARGUMENTS]]...[/]"
+    f":bar_chart:[white bold]cfdl {__version__} {__author__}[/]\n"
+    + "Usage: cfdl [[COMMAND]] [red bold][[OPTIONS]][/] [magenta bold][[ARGUMENTS]]...[/]"
 )
 
 download_options = io.StringIO()
@@ -19,7 +19,7 @@ download_console.print(
     + "  [cyan bold]--clean[/]        [white bold]Clean database before download.[/]\n"
     + "  [cyan bold]-t --tutorial[/]  [white bold]Download tutorial.[/]\n"
     + "  [cyan bold]--pdf[/]          [white bold]Generate pdf after download.[/]\n"
-    + "  [cyan bold]--debug[/]        [white bold]Show progress bar.[/]\n",
+    + "  [cyan bold]--debug[/]        [white bold]Don't show progress bar.[/]\n",
 )
 
 arguments = io.StringIO()

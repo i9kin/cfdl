@@ -1,30 +1,45 @@
 ===============
-codeforces-dl
+cfdl
 ===============
 
 
-.. image:: https://img.shields.io/pypi/v/codeforces-dl.svg
-        :target: https://pypi.python.org/pypi/codeforces-dl
+.. image:: https://img.shields.io/pypi/v/cfdl.svg
+        :target: https://pypi.python.org/pypi/cfdl
 
-.. image:: https://img.shields.io/travis/9kin/codeforces-dl.svg
-        :target: https://travis-ci.com/9kin/codeforces-dl
+.. image:: https://img.shields.io/travis/9kin/cfdl.svg
+        :target: https://travis-ci.com/9kin/cfdl
 
-.. image:: https://readthedocs.org/projects/codeforces-dl/badge/?version=latest
-        :target: https://codeforces-dl.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/cfdl/badge/?version=latest
+        :target: https://cfdl.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
 
-.. image:: https://pyup.io/repos/github/9kin/codeforces-dl/shield.svg
-     :target: https://pyup.io/repos/github/9kin/codeforces-dl/
+.. image:: https://pyup.io/repos/github/9kin/cfdl/shield.svg
+     :target: https://pyup.io/repos/github/9kin/cfdl/
      :alt: Updates
 
+installation
+""""""""
+``git clone https://github.com/9kin/cfdl``
+
+``cd cfdl``
+
+``git submodule init``
+
+``git submodule update``
+
+``python3 -m venv env # if you want use venv``
+
+``source env/bin/activate # if you want use venv``
+
+``pip3 install .``
 
 
 download task (tutorials) with asyncio
 
 
 * Free software: MIT license
-* Documentation: https://codeforces-dl.readthedocs.io.
+* Documentation: https://cfdl.readthedocs.io.
 
 
 Features

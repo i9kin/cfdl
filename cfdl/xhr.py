@@ -52,7 +52,6 @@ async def parse(contests, additional_tasks, debug):
         bar.set_description(f"download tutorial for {task}")
         if json["success"] == "true":
             tutorials.append((task, json["html"]))
-
     update_tutorials(tutorials)
     await session.close()
 

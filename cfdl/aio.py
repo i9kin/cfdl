@@ -272,7 +272,7 @@ async def parse_url_blogs(
             blogs[i][1].update(problemcode, submition)
 
             bar.update()
-            bar.set_description(f"parse url {parse_link}")
+            bar.set_description(f"parse url {url}")
 
 
 async def async_parse(
