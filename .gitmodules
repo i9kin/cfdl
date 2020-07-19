@@ -1,4 +1,0 @@
-[submodule "cfdl/MathJax"]
-	path = cfdl/MathJax
-	url = https://github.com/mathjax/MathJax.git
-	branch=2.7.5
