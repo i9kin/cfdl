@@ -3,8 +3,9 @@ import os
 import pdfkit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from .bar_utils import Bar
 from .models import Solutions, SolutionsArray, Tasks
-from .utils import get_letter, get_tasks
+from .utils import get_contest, get_letter, get_tasks
 
 # pewee -> jinja2 -> (pdfkit, wkhtmltopdf)
 
@@ -43,9 +44,12 @@ def generate(
         "2": ["Div. 2", "Div.2", "Див. 2", "Див.2"],
         "3": ["Div. 3", "Div.3", "Див. 3", "Див.3"],
         "4": ["Div. 4", "Div.4", "Див. 4", "Див.4"],
+        "gl": ["Global Round", "Good Bye", "Hello", "Технокубок"],
     }
+
     new = []
     for task in tasks:
+        DIVISION = "gl"
         letter = get_letter(task.id)
         if letter not in letter_range:
             continue
@@ -54,22 +58,57 @@ def generate(
             for string in m[div]:
                 if string in task.contest_title:
                     find = True
+                    DIVISION = div
                     break
         if find and (
             ((has_tutorial and len(task.tutorial) != 0) or not has_tutorial)
             and ((has_code and len(task.solution) != 0) or not has_code)
         ):
-            new.append(task)
-    html = render_tasks(new, solutions_array)
-    if generate_pdf:
-        options = {
-            "page-size": "Letter",
-            "no-outline": None,
-            "javascript-delay": (2 * len(new) + 1) * 1000,
-        }
-        pdfkit.from_string(html, "out.pdf", options=options)
-    else:
-        open("out.html", "w").write(html)
+            new.append((task, DIVISION))
+    div_map = {}
+
+    cnt = 0
+
+    for task, div in new:
+
+        contest = get_contest(task.id)
+        if div not in div_map:
+            div_map[div] = {contest: [task]}
+            cnt += 1
+        else:
+            if contest not in div_map[div]:
+                cnt += 1
+                div_map[div][contest] = []
+
+            div_map[div][contest].append(task)
+
+    import os
+    import shutil
+
+    if not os.path.exists("demo"):
+        # shutil.rmtree('demo')
+        os.mkdir("demo")
+    os.chdir("demo")
+
+    bar = Bar(range(cnt))
+    for div in div_map:
+        if not os.path.exists(div):
+            os.mkdir(div)
+        for contest_id in div_map[div]:
+            file = f"{div}/{contest_id}.pdf"
+
+            sz = len(div_map[div][contest_id])
+            options = {
+                "page-size": "Letter",
+                "no-outline": None,
+                "javascript-delay": (2 * sz) * 1000,
+            }
+            html = render_tasks(div_map[div][contest_id], solutions_array)
+
+            open(f"{div}/{contest_id}.html", "w").write(html)
+            pdfkit.from_string(html, file, options=options)
+            bar.update()
+
 
 
 __all__ = ["dir_path", "env", "generate", "render_tasks"]

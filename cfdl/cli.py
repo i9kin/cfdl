@@ -146,8 +146,8 @@ def pdf(arguments, debug, div, letter, tutorial, code):
 @click.option("--debug", default=True, is_flag=True)
 @click.option(
     "--div",
-    default=["1", "2", "3", "4"],
-    type=click.Choice(["1", "2", "3", "4"]),
+    default=["1", "2", "3", "4", "gl"],
+    type=click.Choice(["1", "2", "3", "4", "gl"]),
     multiple=True,
 )
 @click.option(

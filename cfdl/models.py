@@ -1,7 +1,14 @@
 import os
 from typing import List, Tuple, Union
 
-from peewee import CharField, Model, SqliteDatabase, TextField, chunked
+from peewee import (
+    BooleanField,
+    CharField,
+    Model,
+    SqliteDatabase,
+    TextField,
+    chunked,
+)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -45,6 +52,17 @@ class Tutorials(Model):
 
         database = db
         db_table = "tutorial"
+
+
+class Statistic(Model):
+
+    id = CharField(max_length=15)
+    is_solved = BooleanField(default=False)
+
+    class Meta:
+
+        database = db
+        db_table = "statistic"
 
 
 class SolutionsArray:

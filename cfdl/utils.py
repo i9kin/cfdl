@@ -211,6 +211,12 @@ def get_letter(task_name):
             return task_name[i:]
 
 
+def get_contest(task_name):
+    for i, char in enumerate(task_name):
+        if not char.isdigit():
+            return task_name[:i]
+
+
 __all__ = [
     "ISSUES",
     "OLD_ISSUES",

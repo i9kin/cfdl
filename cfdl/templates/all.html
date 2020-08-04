@@ -17,11 +17,17 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
     
     <script>hljs.initHighlightingOnLoad();</script>
+<!-- image error https://github.com/wkhtmltopdf/wkhtmltopdf/issues/1726#issuecomment-44821034-->
+    <style type="text/css">
+        * { font-family: Verdana; }
+        .new-page { page-break-after: always; }
 
-<style type="text/css">
-* { font-family: Verdana; }
-.new-page { page-break-after: always; }
-</style>
+        img {
+            max-height: initial !important;
+            max-width: initial ! important;
+        }
+    </style>
+    
 </head>
 
 <body>
@@ -33,7 +39,10 @@
 
     {{ task.condition | safe }}
 
+    <div class="new-page"></div>
+    
     {% if "Разбор недоступен" not in task.tutorial %}
+        {{ task.tags }}
 
         {{ task.tutorial | safe }}
 

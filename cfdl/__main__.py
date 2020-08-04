@@ -1,5 +1,6 @@
 import sys
 
-from .cli import cli
+from .cli import main
+# from .cli_todo import main
 
-sys.exit(cli())
+sys.exit(main())

@@ -19,6 +19,10 @@ requirements = [
     "tqdm",
     "aiohttp==3.6.2",
     "pdfkit",
+    "black",
+    "isort",
+    "pybetter",
+    "PyInquirer",
 ]
 
 setup_requirements = [
