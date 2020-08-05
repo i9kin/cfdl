@@ -7,7 +7,7 @@ from rich.columns import Columns
 from rich.panel import Panel
 
 from .models import Statistic, Tasks
-from .utils import get_contest, get_letter
+from .utils import get_contest, get_divison, get_letter
 
 
 class NumberValidator(Validator):
@@ -128,22 +128,55 @@ def main():
         contest_id = cli_contest()
         cli_task(contest_id)
     else:
+        q = prompt(
+            [
+                {
+                    "type": "list",
+                    "name": "div",
+                    "message": "Choose contest division?",
+                    "choices": ["gl", "1", "2", "3", "4"],
+                }
+            ]
+        )
+
+        if q == {}:
+            exit(0)
+        DIV = q["div"]
+
         contest = {}
+        m = {}
+        for task in Tasks.select():
+            m[task.id] = get_divison(task.contest_title)
+
         for task in Statistic.select():
             id = get_contest(task.id)
-            if id not in contest:
-                contest[id] = []
-            contest[id].append(task)
+            div = m[task.id]
+            if div not in contest:
+                contest[div] = {}
+            if id not in contest[div]:
+                contest[div][id] = []
+            contest[div][id].append(task)
 
-        for id in contest:
-            contest[id].sort(key=lambda x: x.id)
+        for div in contest:
+            for id in contest[div]:
+                contest[div][id].sort(key=lambda x: x.id)
 
-        keys = sorted(list(contest.keys()), reverse=True)
+        keys = sorted(list(contest[DIV].keys()), reverse=True)
 
         user_renderables = [
-            Panel(get_content(contest[tasks]), expand=True) for tasks in keys
+            Panel(get_content(contest[DIV][tasks]), expand=True)
+            for tasks in keys
         ]
+
+        cnt = 0
+        sz = 0
+        for tasks in keys:
+            sz += len(contest[DIV][tasks])
+            for task in contest[DIV][tasks]:
+                if task.is_solved:
+                    cnt += 1
         rprint(Columns(user_renderables))
+        rprint(f"{sz} {cnt} {(cnt / sz):.2f}%")
 
 
 __all__ = [

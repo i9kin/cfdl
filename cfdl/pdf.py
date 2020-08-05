@@ -110,5 +110,4 @@ def generate(
             bar.update()
 
 
-
 __all__ = ["dir_path", "env", "generate", "render_tasks"]

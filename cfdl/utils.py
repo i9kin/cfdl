@@ -217,6 +217,21 @@ def get_contest(task_name):
             return task_name[:i]
 
 
+def get_divison(contest_title):
+    m = {
+        "1": ["Div. 1", "Div.1", "Див. 1", "Див.1"],
+        "2": ["Div. 2", "Div.2", "Див. 2", "Див.2"],
+        "3": ["Div. 3", "Div.3", "Див. 3", "Див.3"],
+        "4": ["Div. 4", "Div.4", "Див. 4", "Див.4"],
+        "gl": ["Global Round", "Good Bye", "Hello", "Технокубок"],
+    }
+    for div in m:
+        for string in m[div]:
+            if string in contest_title:
+                return div
+    return "gl"
+
+
 __all__ = [
     "ISSUES",
     "OLD_ISSUES",
