@@ -1,3 +1,4 @@
+import html
 import asyncio
 
 import aiohttp
@@ -37,28 +38,69 @@ async def get_problemset():
 
 
 lru_problemset = None
+lru_name = None
+
+
+def extend_problemset(contest_id, letter, name):
+    global lru_problemset
+    for _, task_name, _ in lru_problemset[0][contest_id]:
+        if task_name == name:
+            return
+    copy_contest_id = -1
+    ind_ = -1
+    for cur_contest_id, ind in lru_name[name]:
+        if abs(cur_contest_id - contest_id) < abs(
+            copy_contest_id - contest_id
+        ):
+            copy_contest_id = cur_contest_id
+            ind_ = ind
+    task = lru_problemset[0][copy_contest_id][ind_].copy()
+    task[0] = letter
+    if contest_id not in lru_problemset[0]:
+        lru_problemset[0][contest_id] = [task]
+    else:
+        lru_problemset[0][contest_id].append(task)
+
+
+def extend_task(id, tree):
+    """Extend tasks like div1 div2 but api send div1"""
+    tasks_xpath = '//*[@id="pageContent"]/div[2]/div[6]/table/tr'
+    for task in tree.xpath(tasks_xpath)[1:]:
+        letter = task.xpath("td[1]/a")[0].text_content().strip()
+        name = " ".join(
+            task.xpath("td[2]/div/div[1]/a")[0].text_content().split()
+        )
+        extend_problemset(id, letter, name)
 
 
 def problemset():
-    global lru_problemset
+    global lru_problemset, lru_name
     if lru_problemset is not None:
         return lru_problemset
     data = asyncio.run(get_problemset())
     data = data["result"]["problems"]
-
     last_contest = data[0]["contestId"]
     tasks = {}
+    lru_name = {}
     for task in data:
-        id = task["contestId"]
-        index = task["index"]
+        contest_id = task["contestId"]
+        letter = task["index"]
         tags = task["tags"]
         name = task["name"]
-        if id not in tasks:
-            tasks[id] = [[index, name, tags]]
+        if contest_id not in tasks:
+            tasks[contest_id] = [[letter, name, tags]]
         else:
-            tasks[id].append([index, name, tags])
-    for key in tasks:
-        tasks[key].sort()
+            tasks[contest_id].append([letter, name, tags])
+    for contest_id in tasks:
+        tasks[contest_id].sort()
+    for contest_id in tasks:
+        for i, task in enumerate(tasks[contest_id]):
+            if task[1] not in lru_name:
+                lru_name[task[1]] = [(contest_id, i)]
+            else:
+                lru_name[task[1]].append((contest_id, i))
+    for name in lru_name:
+        lru_name[name].sort()
 
     lru_problemset = tasks, last_contest
     return tasks, last_contest
@@ -70,8 +112,12 @@ def get_condition(tree):
 
 
 def get_contest_title(tree):
-    contest_xpath = '//*[@id="sidebar"]/div[1]/table/tbody/tr[1]/th/a'
-    return tree.xpath(contest_xpath)[0].text_content()
+    contest_xpath1 = '//*[@id="sidebar"]/div[1]/table/tbody/tr[1]/th/a'
+    contest_xpath2 = '//*[@id="sidebar"]/div[2]/table/tbody/tr[1]/th/a'  # 2
+    element = tree.xpath(contest_xpath1)
+    if element == []:
+        element = tree.xpath(contest_xpath2)
+    return element[0].text_content()
 
 
 def materials(tree):
@@ -81,9 +127,19 @@ def materials(tree):
         materials_xpath = '//*[@id="sidebar"]/div[5]/ul/li/span[1]/a'
         materials = tree.xpath(materials_xpath)
     material_link = None
+    # TODO araay
+
+    invalid_blogs = [
+        "/blog/entry/3770",
+        "/blog/entry/419",
+        "/blog/entry/3874",  # why?
+    ]
+
     for material in materials:
-        if "Tutorial" in material.text_content():
-            material_link = material.get("href")
+        if "Разбор задач" in material.text_content():
+            if material.get("href") not in invalid_blogs:
+                material_link = material.get("href")
+    # print(material_link)
     if material_link is None:
         return None
     return material_link.split("/")[-1]
@@ -175,7 +231,9 @@ def clean_contests(contests):
 def html_print(tree):
     if type(tree) == str:
         tree = fromstring(tree)
-    return tostring(tree, encoding="utf-8", pretty_print=True).decode("utf-8")
+    return html.unescape(
+        tostring(tree, encoding="utf-8", pretty_print=True).decode("utf-8")
+    )
 
 
 def clean_tasks(tasks):

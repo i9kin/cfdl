@@ -23,6 +23,8 @@ requirements = [
     "isort",
     "pybetter",
     "PyInquirer",
+    "sphinx",
+    "sphinx_autodoc_typehints",
 ]
 
 setup_requirements = [
@@ -49,7 +51,11 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     description="download task (tutorials) with asyncio",
-    entry_points={"console_scripts": ["cfdl = cfdl.cli:main",],},
+    entry_points={
+        "console_scripts": [
+            "cfdl = cfdl.cli:main",
+        ],
+    },
     install_requires=requirements,
     license="MIT license",
     long_description=readme + "\n\n" + history,

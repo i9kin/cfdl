@@ -75,7 +75,6 @@ def parse_arguments(arguments):
 @click.argument("arguments", nargs=-1)
 def download(arguments, clean, tutorial, pdf, debug):
     download_contests, download_tasks = parse_arguments(arguments)
-
     if clean:
         clean_database()
 
@@ -84,6 +83,8 @@ def download(arguments, clean, tutorial, pdf, debug):
     if tutorial:
         xhr.main(download_contests, download_tasks, debug=debug)
     fast_insert()
+
+    debug_with_browser()
 
     if pdf:
         topdf.generate(
@@ -95,6 +96,16 @@ def download(arguments, clean, tutorial, pdf, debug):
             False,
             True,
         )
+
+
+from .models import SolutionsArray, Solutions, Tasks
+
+
+def debug_with_browser():
+    tasks = [t for t in Tasks.select()]
+    # print(tasks)
+    solutions_array = SolutionsArray(Solutions.select().dicts())
+    open("tmp.html", "w").write(topdf.render_tasks(tasks, solutions_array))
 
 
 def parse_task_option(options):

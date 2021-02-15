@@ -16,7 +16,14 @@ from lxml.html import HtmlElement, fromstring
 
 from .bar_utils import Bar
 from .models import SolutionsArray
-from .utils import get_tasks, materials, parse_blog, parse_link, problemset
+from .utils import (
+    get_tasks,
+    materials,
+    parse_blog,
+    parse_link,
+    problemset,
+    extend_task,
+)
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
@@ -63,13 +70,13 @@ class AIO:
         return self.contests_blog[contest_id]
 
 
-def get_materials(contest_html: str) -> Union[str, None]:
+def get_materials(contest_tree: HtmlElement) -> Union[str, None]:
     """getting the url tutorial for the contest.
 
     :param contest_html: html code of the contest
     :return: url tutorial or None
     """
-    material_url = materials(fromstring(contest_html))
+    material_url = materials(contest_tree)
     if material_url is None:
         return None
     return f"https://codeforces.com/blog/entry/{material_url}?locale=ru"
@@ -127,7 +134,7 @@ async def get_html_contest(
     """
 
     async with session.get(
-        f"http://codeforces.com/contest/{contest_id}?locale=en"
+        f"http://codeforces.com/contest/{contest_id}?locale=ru"
     ) as resp:
         return contest_id, await resp.text()
 
@@ -135,7 +142,7 @@ async def get_html_contest(
 async def parse_blog_urls(
     session: aiohttp.ClientSession, contests: List[int], debug: bool = True
 ) -> List[Tuple[int, str]]:
-    """getting the url of the blog (tutorial) for the contests.
+    """getting the url of tasks (error with api) of the blog (tutorial) for the contests.
 
     :param session: aiohttp.ClientSession
     :param contests: [contest_id, ...]
@@ -143,23 +150,29 @@ async def parse_blog_urls(
     :return: list of tuple(contest_id, url of the blog (tutorial) for the contest)
     """
     loop = asyncio.get_running_loop()
-    blog_urls = []
-    bar = Bar(range(len(contests)), debug=debug)
 
+    bar = Bar(range(len(contests)), debug=debug)
+    contests_tree = []
     with concurrent.futures.ThreadPoolExecutor() as pool:
         for future in asyncio.as_completed(
             [get_html_contest(session, url) for url in contests]
         ):
             contest_id, contest_html = await future
-            material_url = await loop.run_in_executor(
-                pool, get_materials, contest_html
+
+            contest_tree = await loop.run_in_executor(
+                pool, get_tree, contest_html
             )
+            contests_tree.append((contest_id, contest_tree))
 
             bar.update()
             bar.set_description("parse contest %s" % contest_id)
 
-            if material_url is not None:
-                blog_urls.append((contest_id, material_url))
+    blog_urls = []
+    for contest_id, contest_tree in contests_tree:
+        material_url = get_materials(contest_tree)
+        extend_task(contest_id, contest_tree)
+        if material_url is not None:
+            blog_urls.append((contest_id, material_url))
     return blog_urls
 
 

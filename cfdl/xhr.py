@@ -24,8 +24,11 @@ async def get_token(session):
 
 async def problemData(task, session, csrf_token):
     resp = await session.post(
-        "https://codeforces.com/data/problemTutorial",
-        data={"problemCode": task, "csrf_token": csrf_token,},
+        "https://codeforces.com/data/problemTutorial?locale=ru",
+        data={
+            "problemCode": task,
+            "csrf_token": csrf_token,
+        },
         headers={
             "x-requested-with": "XMLHttpRequest",
             "x-csrf-token": csrf_token,

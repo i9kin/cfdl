@@ -117,7 +117,10 @@ def main():
                 "type": "list",
                 "name": "command",
                 "message": "What do you want to do?",
-                "choices": ["Mark tasks", "View cards",],
+                "choices": [
+                    "Mark tasks",
+                    "View cards",
+                ],
             }
         ]
     )
