@@ -81,7 +81,8 @@ def download(arguments, clean, tutorial, pdf, debug):
     download_all.main(download_contests, download_tasks, debug=debug)
 
     if tutorial:
-        xhr.main(download_contests, download_tasks, debug=debug)
+        xhr.parse_tutorials(download_contests, download_tasks, debug=debug)
+
     fast_insert()
 
     debug_with_browser()

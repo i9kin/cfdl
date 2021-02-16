@@ -38,7 +38,7 @@ async def problemData(task, session, csrf_token):
         return task, await resp.json()
 
 
-async def parse(contests, additional_tasks, debug):
+async def xhr_tutorials(contests, additional_tasks, debug):
     session = aiohttp.ClientSession(headers=headers)
     csrf_token = await get_token(session)
 
@@ -59,8 +59,8 @@ async def parse(contests, additional_tasks, debug):
     await session.close()
 
 
-def main(contests, additional_tasks, debug=True):
-    asyncio.run(parse(contests, additional_tasks, debug=debug))
+def parse_tutorials(contests, additional_tasks, debug=True):
+    asyncio.run(xhr_tutorials(contests, additional_tasks, debug=debug))
 
 
 __all__ = ["get_token", "headers", "main", "parse", "problemData"]

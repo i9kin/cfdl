@@ -37,51 +37,70 @@ async def get_problemset():
             error()
 
 
-lru_problemset = None
-lru_name = None
+PROBLEMSET = None
+NAME = None
 
 
-def extend_problemset(contest_id, letter, name):
-    global lru_problemset
-    for _, task_name, _ in lru_problemset[0][contest_id]:
+def get_task(name, my_contest_id):
+    """div1/2 contest"""
+    contest_id = -1
+    indx = -1
+    for cur_contest_id, ind in NAME[name]:
+        if abs(cur_contest_id - my_contest_id) < abs(
+            contest_id - my_contest_id
+        ):
+            contest_id = cur_contest_id
+            indx = ind
+    return contest_id, indx
+
+
+def contests(name, my_contest_id):
+    """div1/div2 fix return [div_1, div2] or [divX] like [(contest_id, indx), ...]"""
+    contests = []
+    for contest_id, indx in NAME[name]:
+        if abs(contest_id - my_contest_id) < 4:
+            contests.append((contest_id, indx))
+    return contests
+
+
+def extend_problemset(contest_id, letter, name, number):
+    global PROBLEMSET
+    for _, task_name, _ in PROBLEMSET[0][contest_id]:
         if task_name == name:
             return
-    copy_contest_id = -1
-    ind_ = -1
-    for cur_contest_id, ind in lru_name[name]:
-        if abs(cur_contest_id - contest_id) < abs(
-            copy_contest_id - contest_id
-        ):
-            copy_contest_id = cur_contest_id
-            ind_ = ind
-    task = lru_problemset[0][copy_contest_id][ind_].copy()
+    print(contest_id, name)
+
+    copy_contest_id, indx = get_task(name, contest_id)
+    task = PROBLEMSET[0][copy_contest_id][indx].copy()
     task[0] = letter
-    if contest_id not in lru_problemset[0]:
-        lru_problemset[0][contest_id] = [task]
+    if contest_id not in PROBLEMSET[0]:
+        PROBLEMSET[0][contest_id] = [task]
     else:
-        lru_problemset[0][contest_id].append(task)
+        PROBLEMSET[0][contest_id].append(task)
+
+    NAME[name].append((contest_id, number))
 
 
 def extend_task(id, tree):
     """Extend tasks like div1 div2 but api send div1"""
     tasks_xpath = '//*[@id="pageContent"]/div[2]/div[6]/table/tr'
-    for task in tree.xpath(tasks_xpath)[1:]:
+    for i, task in enumerate(tree.xpath(tasks_xpath)[1:]):
         letter = task.xpath("td[1]/a")[0].text_content().strip()
         name = " ".join(
             task.xpath("td[2]/div/div[1]/a")[0].text_content().split()
         )
-        extend_problemset(id, letter, name)
+        extend_problemset(id, letter, name, i)
 
 
 def problemset():
-    global lru_problemset, lru_name
-    if lru_problemset is not None:
-        return lru_problemset
+    global PROBLEMSET, NAME
+    if PROBLEMSET is not None:
+        return PROBLEMSET
     data = asyncio.run(get_problemset())
     data = data["result"]["problems"]
     last_contest = data[0]["contestId"]
     tasks = {}
-    lru_name = {}
+    NAME = {}
     for task in data:
         contest_id = task["contestId"]
         letter = task["index"]
@@ -93,16 +112,17 @@ def problemset():
             tasks[contest_id].append([letter, name, tags])
     for contest_id in tasks:
         tasks[contest_id].sort()
+
     for contest_id in tasks:
         for i, task in enumerate(tasks[contest_id]):
-            if task[1] not in lru_name:
-                lru_name[task[1]] = [(contest_id, i)]
+            if task[1] not in NAME:
+                NAME[task[1]] = [(contest_id, i)]
             else:
-                lru_name[task[1]].append((contest_id, i))
-    for name in lru_name:
-        lru_name[name].sort()
+                NAME[task[1]].append((contest_id, i))
+    for name in NAME:
+        NAME[name].sort()
 
-    lru_problemset = tasks, last_contest
+    PROBLEMSET = tasks, last_contest
     return tasks, last_contest
 
 
@@ -137,8 +157,9 @@ def materials(tree):
 
     for material in materials:
         if "Разбор задач" in material.text_content():
-            if material.get("href") not in invalid_blogs:
-                material_link = material.get("href")
+            link = material.get("href")
+            if link not in invalid_blogs and link.startswith("/blog/entry/"):
+                material_link = link
     # print(material_link)
     if material_link is None:
         return None
@@ -162,57 +183,26 @@ def parse_blog(tree):
         0
     ].getchildren()
     solutions = []
-    prev_code = 0
-    problemcode = None
-
     urls = {}
 
-    for i in range(len(childrens)):
-        html_ = tostring(childrens[i], encoding="utf-8").decode("utf-8")
-        code = childrens[i].xpath("div/pre/code/text()")
-        codeforces_submission_href = childrens[i].get("href")
+    for element in childrens:
+        problemTutorial = element.find_class("problemTutorial")
+        if len(problemTutorial) != 0:
+            problemTutorial[0].text = "CF_API!!!!!!!!!!!!!!!!!"
+            problemcode = problemTutorial[0].attrib["problemcode"]
+            name = get_task_name(problemcode)
+            print(name, contests(name, int(get_contest(problemcode))))
 
-        if codeforces_submission_href is None:
-            links = childrens[i].xpath("a")
-
-            for link in links:
-                href = link.get("href")
-                if "submission" in href or "pastebin" in href:
-                    codeforces_submission_href = href
-                    # TODO 2 CF links
-                    break
-
-        elif (
-            "submission" not in codeforces_submission_href
-            and "pastebin" not in codeforces_submission_href
-        ):
-            codeforces_submission_href = None
-        if problemcode is not None and codeforces_submission_href is not None:
-            if problemcode not in urls:
-                urls[problemcode] = [codeforces_submission_href]
-            else:
-                urls[problemcode].append(codeforces_submission_href)
-
-        class_ = childrens[i].get("class")
-
-        if len(code) != 0:
-            solutions.append(
-                {
-                    "solution_id": f"{problemcode}[{prev_code}]",
-                    "solution": code[0],
-                }
-            )
-            prev_code += 1
-
-        elif "problemTutorial" in html_:
-            prev_code = 0
-            problemcode = childrens[i].get("problemcode")
-
-            if class_ == "spoiler":
-                problemcode = (
-                    childrens[i].xpath("div/div")[0].get("problemcode")
-                )
     return SolutionsArray(solutions, urls)
+
+
+def get_task_name(problemcode: str):
+    contest = int(get_contest(problemcode))
+    letter = get_letter(problemcode)
+    for task in PROBLEMSET[0][contest]:
+        if task[0] == letter:
+            return task[1]
+    exit(-1)
 
 
 def clean_contests(contests):

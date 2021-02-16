@@ -128,21 +128,25 @@ def delete_solutions(solutions_id):
 
 
 ALL_TASKS, ALL_SOLUTIONS = [], []
+TUTORIALS = {}
 
 
 def update(tasks, solutions):
     global ALL_TASKS, ALL_SOLUTIONS
     ALL_TASKS, ALL_SOLUTIONS = tasks, solutions
 
+    for t in TUTORIALS:
+        print(t)
+
 
 def update_tutorials(tutorials: List[Tuple[str, str]]):
-    global ALL_TASKS
-    tutorials_map = {}
+    global ALL_TASKS, TUTORIALS
     for task_id, tutorial in tutorials:
-        tutorials_map[task_id] = tutorial
-    for task in ALL_TASKS:
-        if task["id"] in tutorials_map:
-            task["tutorial"] = tutorials_map[task["id"]]
+        TUTORIALS[task_id] = tutorial
+
+    # for task in ALL_TASKS:
+    #    if task["id"] in TUTORIALS:
+    #        task["tutorial"] = tutorials_map[task["id"]]
 
 
 def fast_insert():
