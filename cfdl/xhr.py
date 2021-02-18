@@ -4,8 +4,6 @@ import aiohttp
 from lxml.html import fromstring
 
 from .bar_utils import Bar
-from .models import Tasks, update_tutorials
-from .utils import get_tasks
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
@@ -38,13 +36,9 @@ async def problemData(task, session, csrf_token):
         return task, await resp.json()
 
 
-async def xhr_tutorials(contests, additional_tasks, debug):
+async def xhr_tutorials(all_tasks, debug):
     session = aiohttp.ClientSession(headers=headers)
     csrf_token = await get_token(session)
-
-    all_tasks = additional_tasks.copy() + get_tasks(contests)
-    all_tasks = [str(contest_id) + letter for contest_id, letter in all_tasks]
-
     tutorials = []
     bar = Bar(range(len(all_tasks)), debug=debug)
     for future in asyncio.as_completed(
@@ -55,12 +49,9 @@ async def xhr_tutorials(contests, additional_tasks, debug):
         bar.set_description(f"download tutorial for {task}")
         if json["success"] == "true":
             tutorials.append((task, json["html"]))
-    update_tutorials(tutorials)
     await session.close()
 
-
-def parse_tutorials(contests, additional_tasks, debug=True):
-    asyncio.run(xhr_tutorials(contests, additional_tasks, debug=debug))
+    return tutorials
 
 
-__all__ = ["get_token", "headers", "main", "parse", "problemData"]
+__all__ = ["get_token", "headers", "problemData", "xhr_tutorials"]

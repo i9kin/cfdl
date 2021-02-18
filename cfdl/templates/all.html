@@ -8,14 +8,16 @@
         });
     </script>
 
-    <script type="text/javascript" async="" src="{{pwd}}/MathJax/MathJax.js?config=TeX-AMS_HTML-full">
+    <!-- <script type="text/javascript" async="" src="{{pwd}}/MathJax/MathJax.js?config=TeX-AMS_HTML-full"> -->
+
+    <script type="text/javascript" async="" src="https://assets.codeforces.com/mathjax/MathJax.js?config=TeX-AMS_HTML-full">
     </script>
 
 	<link rel="stylesheet" href="{{pwd}}/css.css"/>
-    <link rel="stylesheet" href="{{pwd}}/github.css" /> 
+    <link rel="stylesheet" href="{{pwd}}/github.css" />
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
-    
+
     <script>hljs.initHighlightingOnLoad();</script>
 <!-- image error https://github.com/wkhtmltopdf/wkhtmltopdf/issues/1726#issuecomment-44821034-->
     <style type="text/css">
@@ -27,34 +29,25 @@
             max-width: initial ! important;
         }
     </style>
-    
+
 </head>
 
 <body>
 
 {% for task in tasks %}
-    <h1> {{ task.contest_title }}
+    <h1>
+    {{ task.contest_title }}
     {{ task.id }}
-    {{ task.name }} </h1>
+    {{ task.name }}
+    {{ task.tags }} </h1>
 
     {{ task.condition | safe }}
 
     <div class="new-page"></div>
-    
-    {% if "Разбор недоступен" not in task.tutorial %}
-        {{ task.tags }}
-
         {{ task.tutorial | safe }}
-
-        {% for solution in solutions_array[task.id] %}   
-            <pre><code>{{ solution.solution }}</code></pre>
-        {% endfor %}
-    {% endif %}
-
     <div class="new-page"></div>
 
 {% endfor %}
 
 </body>
-
 </html>

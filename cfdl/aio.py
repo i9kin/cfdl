@@ -14,15 +14,16 @@ from typing import List, Tuple, Union
 import aiohttp
 from lxml.html import HtmlElement, fromstring
 
+from . import xhr
 from .bar_utils import Bar
-from .models import SolutionsArray
+from .models import Data
 from .utils import (
+    extend_task,
     get_tasks,
     materials,
-    parse_blog,
-    parse_link,
+    parse_tutorial,
     problemset,
-    extend_task,
+    tasks_jsonify,
 )
 
 headers = {
@@ -30,49 +31,13 @@ headers = {
 }
 
 
-class AIO:
-    """class for saving data."""
-
-    def __init__(self, last_contest: int) -> None:
-        self.contests_task = [{} for _ in range(last_contest + 1)]
-        self.contests_blog = [[] for _ in range(last_contest + 1)]
-
-    def append_task(
-        self, contest_id: int, task_letter: str, tree: HtmlElement
-    ) -> None:
-        """
-        :param contest_id: id of the contest
-        :param task_letter: letter of the task
-        :param tree: class lxml.html.HtmlElement of task
-        """
-        self.contests_task[contest_id][task_letter] = tree
-
-    def append_blog(self, contest_id: int, solutions: SolutionsArray) -> None:
-        """
-        :param contest_id: int
-        :param solutions: class of code solutions from current contest blog
-        """
-        self.contests_blog[contest_id] = solutions
-
-    def get_task(self, contest_id: int, task_letter: str) -> HtmlElement:
-        """
-        :param contest_id: id of the contest
-        :param task_letter: letter of the task
-        :return: class lxml.html.HtmlElement of task
-        """
-        return self.contests_task[contest_id][task_letter]
-
-    def get_blog(self, contest_id: int) -> SolutionsArray:
-        """
-        :param contest_id: id of the contest
-        :return: class of code solutions from current contest blog
-        """
-        return self.contests_blog[contest_id]
+def get_tree(html: str) -> HtmlElement:
+    """getting the lxml.html.HtmlElement for a html"""
+    return fromstring(html)
 
 
 def get_materials(contest_tree: HtmlElement) -> Union[str, None]:
-    """getting the url tutorial for the contest.
-
+    """getting the url tutorial for the contest. Using utils.materials
     :param contest_html: html code of the contest
     :return: url tutorial or None
     """
@@ -80,16 +45,6 @@ def get_materials(contest_tree: HtmlElement) -> Union[str, None]:
     if material_url is None:
         return None
     return f"https://codeforces.com/blog/entry/{material_url}?locale=ru"
-
-
-def get_tree(html: str) -> HtmlElement:
-    """getting the lxml.html.HtmlElement for a url."""
-    return fromstring(html)
-
-
-def parse_blog_from_html(html: str) -> SolutionsArray:
-    """getting class of code solutions from html (tutorial)"""
-    return parse_blog(fromstring(html))
 
 
 async def get_html_task(
@@ -102,7 +57,6 @@ async def get_html_task(
     :param task_letter: letter of the task
     :return: tuple of contest_id, task_letter and html code of the task
     """
-
     async with session.get(
         f"http://codeforces.com/problemset/problem/{contest_id}/{task_letter}?locale=ru"
     ) as resp:
@@ -139,10 +93,10 @@ async def get_html_contest(
         return contest_id, await resp.text()
 
 
-async def parse_blog_urls(
+async def parse_contest(
     session: aiohttp.ClientSession, contests: List[int], debug: bool = True
 ) -> List[Tuple[int, str]]:
-    """getting the url of tasks (error with api) of the blog (tutorial) for the contests.
+    """getting the url of the blog (tutorial) for the contests and extend tasks.
 
     :param session: aiohttp.ClientSession
     :param contests: [contest_id, ...]
@@ -176,11 +130,12 @@ async def parse_blog_urls(
     return blog_urls
 
 
-async def parse_blogs(
+async def parse_blog(
     session: aiohttp.ClientSession,
+    data,
     blog_urls: List[Tuple[int, str]],
     debug: bool = True,
-) -> List[Tuple[int, SolutionsArray]]:
+):
     """getting the solutions from the the blog (tutorial) for the contests.
 
     :param session: aiohttp.ClientSession
@@ -202,7 +157,7 @@ async def parse_blogs(
         ):
             contest_id, html = await future
             solutions = await loop.run_in_executor(
-                pool, parse_blog_from_html, html
+                pool, parse_tutorial, html, data
             )
             bar.update()
             bar.set_description("parse blog %s " % contest_id)
@@ -243,117 +198,60 @@ async def parse_tasks(
     return tasks
 
 
-async def get_html(session, i, problemcode, url: str):
-    async with session.get(url) as resp:
-        return i, problemcode, url, await resp.text()
-
-
-async def parse_url_blogs(
-    session: aiohttp.ClientSession,
-    blogs: List[Tuple[int, SolutionsArray]],
-    debug: bool = True,
-) -> List[Tuple[int, SolutionsArray]]:
-    """getting the solutions from the links in the blog (tutorial) for the
-    contests like link (/contest/1372/submission/86603896, (pastebin TODO))
-
-    :param session: aiohttp.ClientSession
-    :param blogs: [(contest_id, SolutionsArray), .....]
-    :param debug: if true show bar
-    :return: list of tuple(contest_id, solutions for this contest)
-    """
-    urls = []
-    for i, (contest_id, solution_array) in enumerate(blogs):
-        for problemcode in solution_array.urls:
-            for url in solution_array.urls[problemcode]:
-                if not url.startswith("http"):
-                    url = "https://codeforces.com" + url
-                elif url.startswith("https://pastebin.com/"):
-                    url = url[:21] + "raw" + "/" + url[21:]
-                urls.append((i, problemcode, url))
-
-    loop = asyncio.get_running_loop()
-    bar = Bar(range(len(urls)), debug=debug)
-    with concurrent.futures.ThreadPoolExecutor() as pool:
-        for future in asyncio.as_completed(
-            [
-                get_html(session, i, problemcode, url)
-                for i, problemcode, url in urls
-            ]
-        ):
-            i, problemcode, url, html = await future
-            submition = await loop.run_in_executor(pool, parse_link, url, html)
-            blogs[i][1].update(problemcode, submition)
-
-            bar.update()
-            bar.set_description(f"parse url {url}")
-
-
 async def async_parse(
-    contests: List[int],
-    additional_tasks: List[Tuple[int, str]],
-    debug: bool = True,
-) -> AIO:
-    """getting and adding all information for the contests and tasks.
-
-    :param contests: [contest_id, ...]
-    :param additional_tasks: [(contest_id, task_letter), ....]
-    :param debug: if true show bar
-    :return: AIO class
-    """
+    data, contests: List[int], additional_tasks, debug: bool = True
+):
     session = aiohttp.ClientSession()
 
     all_contests = contests + [task[0] for task in additional_tasks]
     all_contests = list(set(all_contests))
 
-    blog_urls = await parse_blog_urls(session, all_contests, debug)
-    blogs = await parse_blogs(session, blog_urls, debug)
-
-    await parse_url_blogs(session, blogs, debug)
-
-    _, last_contest = problemset()
-    a = AIO(last_contest)
-
-    for blog in blogs:
-        a.append_blog(*blog)
-
+    blog_urls = await parse_contest(
+        session=session, contests=all_contests, debug=debug
+    )
     all_tasks = additional_tasks.copy() + get_tasks(contests)
-    tasks = await parse_tasks(session, all_tasks, debug)
-    for task in tasks:
-        a.append_task(*task)
-
+    all_tasks = [str(contest_id) + letter for contest_id, letter in all_tasks]
+    for t in await xhr.xhr_tutorials(all_tasks=all_tasks, debug=debug):
+        data.add_xhr_data(t)
+    await parse_blog(
+        session=session, blog_urls=blog_urls, debug=debug, data=data
+    )
+    all_tasks = additional_tasks.copy() + get_tasks(contests)
+    for contest_id, letter, tree in await parse_tasks(
+        session=session, problems=all_tasks, debug=debug
+    ):
+        data.add_task_tree(contest_id=contest_id, letter=letter, tree=tree)
     await session.close()
-    return a
 
 
-def parse(
-    contests: List[int],
-    additional_tasks: List[Tuple[int, str]],
-    debug: bool = True,
-) -> AIO:
-    """run async function async_parse.
+def download(data: Data, contests, additional_tasks, debug=True):
+    asyncio.run(
+        async_parse(
+            data=data,
+            contests=contests,
+            additional_tasks=additional_tasks,
+            debug=debug,
+        )
+    )
 
-    :param contests: [contest_id, ...]
-    :param additional_tasks: [(contest_id, task_letter), ....]
-    :param debug: if true show bar
-    :return: AIO class
-    """
-    return asyncio.run(async_parse(contests, additional_tasks, debug))
+    TASKS, _ = problemset()
+
+    for contest in contests:
+        tasks = tasks_jsonify(data, contest, TASKS[contest])
+        for task in tasks:
+            data.add_json_task(task)
 
 
 __all__ = [
-    "AIO",
     "async_parse",
-    "get_html",
+    "download",
     "get_html_blog",
     "get_html_contest",
     "get_html_task",
     "get_materials",
     "get_tree",
     "headers",
-    "parse",
-    "parse_blog_from_html",
-    "parse_blog_urls",
-    "parse_blogs",
+    "parse_blog",
+    "parse_contest",
     "parse_tasks",
-    "parse_url_blogs",
 ]

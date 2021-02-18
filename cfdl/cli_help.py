@@ -17,8 +17,6 @@ download_console = Console(file=download_options, force_terminal=True)
 download_console.print(
     "[red bold]Options for download command:[/]\n"
     + "  [cyan bold]--clean[/]        [white bold]Clean database before download.[/]\n"
-    + "  [cyan bold]-t --tutorial[/]  [white bold]Download tutorial.[/]\n"
-    + "  [cyan bold]--pdf[/]          [white bold]Generate pdf after download.[/]\n"
     + "  [cyan bold]--debug[/]        [white bold]Don't show progress bar.[/]\n",
 )
 

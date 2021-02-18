@@ -3,41 +3,15 @@
 # https://github.com/willmcgugan/rich
 # https://github.com/xalanq/cf-tool
 # https://github.com/cp-tools/cf-tool
-# cf download 1365-1367 1362A     (xhr support aiohttp !!!!!!!!!!!!)
-# --pdf (generate pdf)    outfile update
-# --refresh           not updated if task  in db
-# --debug             +-
-# --lang=ru         (translate)      -
-# cf update         (git  update)    -
-# cf pdf 1365-1367 1362A
-#
-# TODO xhr запрос на мини сервер когда закрытие
-# "~/.cf/config" (как в flask-shop)
-# 200 status code
-#
-#
-#
-# TODO
-# 1. clean +
-#    tutorial
-# 2. --with-solution --with-code pdf command
-# 3. code for task from top
-# 4. link parser
-# COMAND html + pdf
-# --div(1/2/3) --range='A'-'B'
-
+import click
 from rich.traceback import install
 
-install()
-
-import click
-
-from . import download_all
-from . import pdf as topdf
-from . import xhr
+from . import aio, renders
 from .cli_help import DownloadHelp, OrderedGroup, PdfHelp
-from .models import clean_database, fast_insert
-from .utils import clean_contests, clean_tasks, problemset
+from .models import Data, Tasks, clean_database
+from .utils import clean_contests, clean_tasks
+
+install()
 
 
 @click.group(cls=OrderedGroup)
@@ -68,45 +42,20 @@ def parse_arguments(arguments):
 
 
 @cli.command(cls=DownloadHelp)
-@click.option("--pdf", is_flag=True)
 @click.option("--debug", default=True, is_flag=True)
 @click.option("--clean", default=False, is_flag=True)
-@click.option("-t", "--tutorial", default=False, is_flag=True)
 @click.argument("arguments", nargs=-1)
-def download(arguments, clean, tutorial, pdf, debug):
+def download(arguments, clean, debug):
     download_contests, download_tasks = parse_arguments(arguments)
     if clean:
         clean_database()
 
-    download_all.main(download_contests, download_tasks, debug=debug)
+    data = Data()
+    aio.download(data, download_contests, download_tasks, debug=debug)
+    data.save()
 
-    if tutorial:
-        xhr.parse_tutorials(download_contests, download_tasks, debug=debug)
-
-    fast_insert()
-
-    debug_with_browser()
-
-    if pdf:
-        topdf.generate(
-            download_contests,
-            download_tasks,
-            ["1", "2", "3", "4"],
-            [chr(i) for i in range(ord("A"), ord("Z") + 1)],
-            False,
-            False,
-            True,
-        )
-
-
-from .models import SolutionsArray, Solutions, Tasks
-
-
-def debug_with_browser():
-    tasks = [t for t in Tasks.select()]
-    # print(tasks)
-    solutions_array = SolutionsArray(Solutions.select().dicts())
-    open("tmp.html", "w").write(topdf.render_tasks(tasks, solutions_array))
+    html = renders.render_tasks([t for t in Tasks().select()])
+    open("tmp.html", "w").write(html)
 
 
 def parse_task_option(options):
@@ -142,15 +91,7 @@ def parse_task_option(options):
 @click.option("-c", "--code", default=False, is_flag=True)
 def pdf(arguments, debug, div, letter, tutorial, code):
     download_contests, download_tasks = parse_arguments(arguments)
-    topdf.generate(
-        download_contests,
-        download_tasks,
-        div,
-        parse_task_option(letter),
-        tutorial,
-        code,
-        True,
-    )
+    pass
 
 
 @cli.command(cls=PdfHelp)
@@ -172,15 +113,7 @@ def pdf(arguments, debug, div, letter, tutorial, code):
 @click.option("-c", "--code", default=False, is_flag=True)
 def html(arguments, debug, div, letter, tutorial, code):
     download_contests, download_tasks = parse_arguments(arguments)
-    topdf.generate(
-        download_contests,
-        download_tasks,
-        div,
-        parse_task_option(letter),
-        tutorial,
-        code,
-        False,
-    )
+    pass
 
 
 def main():
@@ -195,6 +128,7 @@ __all__ = [
     "cli",
     "download",
     "html",
+    "main",
     "parse_arguments",
     "parse_task_option",
     "pdf",

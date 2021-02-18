@@ -1,12 +1,9 @@
-import html
 import asyncio
+import html
 
 import aiohttp
 from lxml.etree import tostring
 from lxml.html import fromstring
-
-from .error import error
-from .models import SolutionsArray
 
 OLD_ISSUES = [
     1252,  # (решение pdf (ICPC))
@@ -33,8 +30,6 @@ async def get_problemset():
     ) as response:
         if response.status == 200:
             return await response.json()
-        else:
-            error()
 
 
 PROBLEMSET = None
@@ -44,41 +39,41 @@ NAME = None
 def get_task(name, my_contest_id):
     """div1/2 contest"""
     contest_id = -1
-    indx = -1
-    for cur_contest_id, ind in NAME[name]:
+    letter = -1
+    for cur_contest_id, letter_ in NAME[name]:
         if abs(cur_contest_id - my_contest_id) < abs(
             contest_id - my_contest_id
         ):
             contest_id = cur_contest_id
-            indx = ind
-    return contest_id, indx
+            letter = letter_
+    for t in PROBLEMSET[0][contest_id]:
+        if t[0] == letter:
+            return t.copy()
 
 
-def contests(name, my_contest_id):
+def tasks(name, my_contest_id):
     """div1/div2 fix return [div_1, div2] or [divX] like [(contest_id, indx), ...]"""
     contests = []
-    for contest_id, indx in NAME[name]:
+    for contest_id, letter in NAME[name]:
         if abs(contest_id - my_contest_id) < 4:
-            contests.append((contest_id, indx))
+            contests.append((contest_id, letter))
     return contests
 
 
-def extend_problemset(contest_id, letter, name, number):
+def extend_problemset(contest_id, name, letter):
     global PROBLEMSET
     for _, task_name, _ in PROBLEMSET[0][contest_id]:
         if task_name == name:
             return
-    print(contest_id, name)
+    task = get_task(name, contest_id)
 
-    copy_contest_id, indx = get_task(name, contest_id)
-    task = PROBLEMSET[0][copy_contest_id][indx].copy()
     task[0] = letter
     if contest_id not in PROBLEMSET[0]:
         PROBLEMSET[0][contest_id] = [task]
     else:
         PROBLEMSET[0][contest_id].append(task)
 
-    NAME[name].append((contest_id, number))
+    NAME[name].append((contest_id, letter))
 
 
 def extend_task(id, tree):
@@ -89,7 +84,7 @@ def extend_task(id, tree):
         name = " ".join(
             task.xpath("td[2]/div/div[1]/a")[0].text_content().split()
         )
-        extend_problemset(id, letter, name, i)
+        extend_problemset(id, name, letter)
 
 
 def problemset():
@@ -116,9 +111,9 @@ def problemset():
     for contest_id in tasks:
         for i, task in enumerate(tasks[contest_id]):
             if task[1] not in NAME:
-                NAME[task[1]] = [(contest_id, i)]
+                NAME[task[1]] = [(contest_id, task[0])]
             else:
-                NAME[task[1]].append((contest_id, i))
+                NAME[task[1]].append((contest_id, task[0]))
     for name in NAME:
         NAME[name].sort()
 
@@ -128,7 +123,9 @@ def problemset():
 
 def get_condition(tree):
     task_element = tree.xpath('//*[@id="pageContent"]/div[2]')[0]
-    return tostring(task_element, encoding="utf-8").decode("utf-8")
+    if len(task_element.find_class("diff-popup")) != 0:
+        task_element = tree.xpath('//*[@id="pageContent"]/div[3]')[0]
+    return get_html(task_element)
 
 
 def get_contest_title(tree):
@@ -160,7 +157,6 @@ def materials(tree):
             link = material.get("href")
             if link not in invalid_blogs and link.startswith("/blog/entry/"):
                 material_link = link
-    # print(material_link)
     if material_link is None:
         return None
     return material_link.split("/")[-1]
@@ -178,22 +174,40 @@ def parse_link(url, html):
         return html
 
 
-def parse_blog(tree):
+def parse_tutorial(html, data):
+    tree = fromstring(html)
+
     childrens = tree.xpath('//*[@id="pageContent"]/div/div/div/div[3]/div')[
         0
     ].getchildren()
-    solutions = []
-    urls = {}
 
+    htmls = []
     for element in childrens:
         problemTutorial = element.find_class("problemTutorial")
         if len(problemTutorial) != 0:
-            problemTutorial[0].text = "CF_API!!!!!!!!!!!!!!!!!"
-            problemcode = problemTutorial[0].attrib["problemcode"]
-            name = get_task_name(problemcode)
-            print(name, contests(name, int(get_contest(problemcode))))
+            for problemcode, html in htmls:
+                data.add_tutorial(problemcode, html)
+            htmls = []
 
-    return SolutionsArray(solutions, urls)
+            problemTutorial = problemTutorial[0]
+            problemcode = problemTutorial.attrib["problemcode"]
+
+            if problemcode != []:
+                name = get_task_name(problemcode)
+                eq_tasks = []
+                for contest_id, letter in tasks(
+                    name, int(get_contest(problemcode))
+                ):
+                    if f"{contest_id}{letter}" in data.XHR_DATA:
+                        eq_tasks.append(f"{contest_id}{letter}")
+
+                for problemcode in eq_tasks:
+                    problemTutorial.text = data.get_xhr_data(problemcode)
+                    htmls.append([problemcode, get_html(problemTutorial)])
+
+        else:
+            for i in range(len(htmls)):
+                htmls[i][1] = htmls[i][1] + get_html(element)
 
 
 def get_task_name(problemcode: str):
@@ -202,7 +216,6 @@ def get_task_name(problemcode: str):
     for task in PROBLEMSET[0][contest]:
         if task[0] == letter:
             return task[1]
-    exit(-1)
 
 
 def clean_contests(contests):
@@ -218,9 +231,9 @@ def clean_contests(contests):
     return res
 
 
-def html_print(tree):
+def get_html(tree):
     if type(tree) == str:
-        tree = fromstring(tree)
+        return tree
     return html.unescape(
         tostring(tree, encoding="utf-8", pretty_print=True).decode("utf-8")
     )
@@ -280,19 +293,51 @@ def get_divison(contest_title):
     return "gl"
 
 
+def task_jsonify(data, contest, problem, name, tags):
+    tree = data.get_task_tree(contest, problem)
+    obj = {
+        "id": f"{contest}{problem}",
+        "name": name,
+        "contest_title": get_contest_title(tree),
+        "condition": get_condition(tree),
+        "tutorial": "",
+        "tags": ", ".join(tags),
+    }
+    return obj
+
+
+def tasks_jsonify(data, contest, TASKS):
+    tasks = []
+    for problem, name, tags in TASKS:
+        tasks.append(task_jsonify(data, contest, problem, name, tags))
+    return tasks
+
+
 __all__ = [
     "ISSUES",
+    "NAME",
     "OLD_ISSUES",
+    "PROBLEMSET",
     "clean_contests",
     "clean_tasks",
+    "extend_problemset",
+    "extend_task",
     "get_codeforces_submition",
     "get_condition",
+    "get_contest",
     "get_contest_title",
+    "get_divison",
+    "get_html",
+    "get_letter",
     "get_problemset",
+    "get_task",
+    "get_task_name",
     "get_tasks",
-    "html_print",
     "materials",
-    "parse_blog",
     "parse_link",
+    "parse_tutorial",
     "problemset",
+    "task_jsonify",
+    "tasks",
+    "tasks_jsonify",
 ]

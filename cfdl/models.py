@@ -1,6 +1,7 @@
 import os
 from typing import List, Tuple, Union
 
+from lxml.html import HtmlElement, fromstring
 from peewee import (
     BooleanField,
     CharField,
@@ -23,7 +24,6 @@ class Tasks(Model):
 
     condition = TextField()  # условие
     tutorial = TextField()  # разбор
-    solution = TextField()  # решение
     tags = TextField()  # теги задачи
 
     materials = None
@@ -31,27 +31,7 @@ class Tasks(Model):
     class Meta:
 
         database = db
-        db_table = "codeforces"
-
-
-class Solutions(Model):
-    solution_id = CharField(max_length=100)  # 1358F[1/2/3]
-    solution = TextField()  # решение
-
-    class Meta:
-
-        database = db
-        db_table = "solutions"
-
-
-class Tutorials(Model):
-    tutorial_id = CharField(max_length=100)  # 1358F[1/2/3]
-    tutorial = TextField()  # идяе решения
-
-    class Meta:
-
-        database = db
-        db_table = "tutorial"
+        db_table = "tasks"
 
 
 class Statistic(Model):
@@ -65,102 +45,62 @@ class Statistic(Model):
         db_table = "statistic"
 
 
-class SolutionsArray:
-    # parse_blog return string for sql (for fast query)
-    # Solutions.select().where(Solutions.solution_id.startswith('1361A'))
-    # key : string '1361A' val: '1361A[0],...'
-
-    def __init__(self, array, urls=None):
-
-        if urls is None:
-            urls = {}
-
-        self.m = {}
-        self.urls = urls
-        for model in array:
-            s = model["solution_id"][: model["solution_id"].find("[")]
-            if s not in self.m:
-                self.m[s] = [model]
-            else:
-                self.m[s].append(model)
-
-    def __getitem__(self, key):
-        if key in self.m:
-            return self.m[key]
-        else:
-            return []
-
-    def __str__(self):
-        return str(len(self.m))
-
-    def update(self, problemcode, submition):
-        if problemcode not in self.m:
-            self.m[problemcode] = [
-                {"solution_id": problemcode + "[0]", "solution": submition}
-            ]
-        else:
-            self.m[problemcode].append(
-                {
-                    "solution_id": f"{problemcode}[{len(self.m[problemcode])}]",
-                    "solution": submition,
-                }
-            )
-
-    def get_array(self):
-        array = []
-        for problemcode in self.m:
-            for model in self.m[problemcode]:
-                array.append(model)
-        return array
-
-
 def clean_database():
-    db.drop_tables([Tasks, Solutions])
-    db.create_tables([Tasks, Solutions])
+    db.drop_tables([Tasks])
+    db.create_tables([Tasks])
 
 
 def delete_tasks(tasks_id):
     Tasks.delete().where(Tasks.id << tasks_id).execute()
 
 
-def delete_solutions(solutions_id):
-    Solutions.delete().where(Solutions.solution_id << solutions_id).execute()
+class Data:
+    """class for saving data."""
 
+    def __init__(self):
+        self.TASKS = []
+        self.XHR_DATA = {}
+        self.TASK_SOLUTION = {}
+        self.TASK_TREE = {}
 
-ALL_TASKS, ALL_SOLUTIONS = [], []
-TUTORIALS = {}
+    def add_task_tree(
+        self, contest_id: int, letter: str, tree: HtmlElement
+    ) -> None:
+        if contest_id not in self.TASK_TREE:
+            self.TASK_TREE[contest_id] = {}
+        self.TASK_TREE[contest_id][letter] = tree
 
+    def get_task_tree(self, contest_id: int, task_letter: str) -> HtmlElement:
+        return self.TASK_TREE[contest_id][task_letter]
 
-def update(tasks, solutions):
-    global ALL_TASKS, ALL_SOLUTIONS
-    ALL_TASKS, ALL_SOLUTIONS = tasks, solutions
+    def add_json_task(self, task):
+        self.TASKS.append(task)
 
-    for t in TUTORIALS:
-        print(t)
+    def add_blog_tree(self):
+        pass
 
+    def add_xhr_data(self, data):
+        self.XHR_DATA[data[0]] = data[1]
 
-def update_tutorials(tutorials: List[Tuple[str, str]]):
-    global ALL_TASKS, TUTORIALS
-    for task_id, tutorial in tutorials:
-        TUTORIALS[task_id] = tutorial
+    def add_tutorial(self, problemcode, html):
+        self.TASK_SOLUTION[problemcode] = html
 
-    # for task in ALL_TASKS:
-    #    if task["id"] in TUTORIALS:
-    #        task["tutorial"] = tutorials_map[task["id"]]
+    def get_xhr_data(self, problemcode):
+        return self.XHR_DATA[problemcode]
 
+    def set_tutorials(self):
+        for task in self.TASKS:
+            if task["id"] in self.TASK_SOLUTION:
+                task["tutorial"] = self.TASK_SOLUTION[task["id"]]
 
-def fast_insert():
-    global ALL_TASKS, ALL_SOLUTIONS
-    delete_tasks([task["id"] for task in ALL_TASKS])
-    delete_solutions([solution["solution_id"] for solution in ALL_SOLUTIONS])
+    def save(self):
+        self.set_tutorials()
 
-    with db.atomic():
-        for batch in chunked(ALL_SOLUTIONS, 1000):
-            Solutions.insert_many(batch).execute()
+        delete_tasks([task["id"] for task in self.TASKS])
 
-    with db.atomic():
-        for batch in chunked(ALL_TASKS, 1000):
-            Tasks.insert_many(batch).execute()
+        with db.atomic():
+            for batch in chunked(self.TASKS, 1000):
+                Tasks.insert_many(batch).execute()
 
 
 if __name__ == "__main__":
@@ -168,12 +108,11 @@ if __name__ == "__main__":
 
 
 __all__ = [
-    "Solutions",
-    "SolutionsArray",
+    "Data",
+    "Statistic",
     "Tasks",
-    "Tutorials",
     "clean_database",
     "db",
+    "delete_tasks",
     "dir_path",
-    "refresh",
 ]

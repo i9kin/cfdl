@@ -8,14 +8,16 @@
         });
     </script>
 
+    <!-- <script type="text/javascript" async="" src="{{pwd}}/MathJax/MathJax.js?config=TeX-AMS_HTML-full"> -->
+
     <script type="text/javascript" async="" src="https://assets.codeforces.com/mathjax/MathJax.js?config=TeX-AMS_HTML-full">
     </script>
 
 	<link rel="stylesheet" href="{{pwd}}/css.css"/>
-    <link rel="stylesheet" href="{{pwd}}/github.css" /> 
+    <link rel="stylesheet" href="{{pwd}}/github.css" />
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
-    
+
     <script>hljs.initHighlightingOnLoad();</script>
 
 <style type="text/css">
@@ -26,23 +28,19 @@
 
 <body>
 
-<h1> {{ task.contest_title }}
+<h1>
+{{ task.contest_title }}
 {{ task.id }}
-{{ task.name }} </h1>
+{{ task.name }}
+{{ task.tags }} </h1>
 
 {{ task.condition | safe }}
 
-{% if "Разбор недоступен" not in task.tutorial %}
-
+<div class="new-page"></div>
     {{ task.tutorial | safe }}
+<div class="new-page"></div>
 
-    {% for solution in solutions %}
-        <pre><code>{{ solution.solution }}</code></pre>
-    {% endfor %}
-
-{% endif %}
-
+<div class="new-page"></div>
 
 </body>
-
 </html>
