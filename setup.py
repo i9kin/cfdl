@@ -17,7 +17,7 @@ requirements = [
     "lxml",
     "peewee",
     "tqdm",
-    "aiohttp==3.6.2",
+    "aiohttp==3.7.4",
     "pdfkit",
     "black",
     "isort",
