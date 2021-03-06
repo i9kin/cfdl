@@ -11,6 +11,10 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
+    "arrow",
+    "python-dotenv",
+    "requests",
+    "asyncio",
     "Click>=7.0",
     "rich",
     "jinja2",
@@ -24,6 +28,7 @@ requirements = [
     "pybetter",
     "PyInquirer",
     "sphinx",
+    "python-magic",
     "sphinx_autodoc_typehints",
 ]
 

@@ -2,6 +2,8 @@
 cfdl
 ===============
 
+.. image:: ./examples/demo.gif
+
 .. image:: ./examples/download.svg
 
 

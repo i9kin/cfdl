@@ -2,14 +2,10 @@ import os
 from typing import List, Tuple, Union
 
 from lxml.html import HtmlElement, fromstring
-from peewee import (
-    BooleanField,
-    CharField,
-    Model,
-    SqliteDatabase,
-    TextField,
-    chunked,
-)
+from peewee import (BooleanField, CharField, IntegerField, Model,
+                    SqliteDatabase, TextField, chunked)
+
+from .utils import get_type
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -45,13 +41,29 @@ class Statistic(Model):
         db_table = "statistic"
 
 
+class Contests(Model):
+
+    name = CharField(max_length=100)
+    contest_id = IntegerField()
+    type = CharField(max_length=100)
+
+    class Meta:
+        database = db
+        db_table = "contests"
+
+
 def clean_database():
-    db.drop_tables([Tasks])
-    db.create_tables([Tasks])
+    db.drop_tables([Tasks, Contests])
+    db.create_tables([Tasks, Contests])
 
 
 def delete_tasks(tasks_id):
     Tasks.delete().where(Tasks.id << tasks_id).execute()
+
+
+def clean_contests():
+    db.drop_tables([Contests])
+    db.create_tables([Contests])
 
 
 class Data:
@@ -82,11 +94,18 @@ class Data:
     def add_xhr_data(self, data):
         self.XHR_DATA[data[0]] = data[1]
 
-    def add_tutorial(self, problemcode, html):
-        self.TASK_SOLUTION[problemcode] = html
+    def add_tutorial(self, problemcode, html, blog_url):
+        html = f'<div class="spoiler"><b class="spoiler-title">{blog_url}</b><div class="spoiler-content" style="display: none;">{html}</div></div>'
+        if problemcode not in self.TASK_SOLUTION:
+            self.TASK_SOLUTION[problemcode] = html
+        else:
+            self.TASK_SOLUTION[problemcode] += html
 
     def get_xhr_data(self, problemcode):
-        return self.XHR_DATA[problemcode]
+        if problemcode not in self.XHR_DATA:
+            return None
+        else:
+            return self.XHR_DATA[problemcode]
 
     def set_tutorials(self):
         for task in self.TASKS:
@@ -95,12 +114,30 @@ class Data:
 
     def save(self):
         self.set_tutorials()
-
         delete_tasks([task["id"] for task in self.TASKS])
-
         with db.atomic():
             for batch in chunked(self.TASKS, 1000):
                 Tasks.insert_many(batch).execute()
+
+
+from json import dumps
+
+
+def save_contests(contests):
+    data = []
+
+    for contest_name, contest_id in contests:
+        data.append(
+            {
+                "contest_id": str(contest_id),
+                "name": contest_name,
+                "type": dumps(get_type(contest_id, contest_name)),
+            }
+        )
+
+    with db.atomic():
+        for batch in chunked(data, 1000):
+            Contests.insert_many(batch).execute()
 
 
 if __name__ == "__main__":
@@ -108,6 +145,7 @@ if __name__ == "__main__":
 
 
 __all__ = [
+    "Contests",
     "Data",
     "Statistic",
     "Tasks",
@@ -115,4 +153,5 @@ __all__ = [
     "db",
     "delete_tasks",
     "dir_path",
+    "save_contests",
 ]
